@@ -95,9 +95,11 @@ MiniAODMuTauTriggerAnalyzer::MiniAODMuTauTriggerAnalyzer(const edm::ParameterSet
   bookVariable(tree_,"muPt");
   bookVariable(tree_,"muEta");
   bookVariable(tree_,"muPhi");
+  bookVariable(tree_,"muM");
   bookVariable(tree_,"tauPt");
   bookVariable(tree_,"tauEta");
   bookVariable(tree_,"tauPhi");
+  bookVariable(tree_,"tauM");
   bookVariable(tree_,"muGenMatch");
   bookVariable(tree_,"tauGenMatch");
   
@@ -262,9 +264,11 @@ void MiniAODMuTauTriggerAnalyzer::analyze(const edm::Event& iEvent, const edm::E
       treeVars_["muPt"] = mu.pt();
       treeVars_["muEta"] = mu.eta();
       treeVars_["muPhi"] = mu.phi();
+      treeVars_["muM"] = mu.mass();
       treeVars_["tauPt"] = tau.pt();
       treeVars_["tauEta"] = tau.eta();
       treeVars_["tauPhi"] = tau.phi();
+      treeVars_["tauM"] = tau.mass();
       // gen match
       if(!checkMCMatch_ || mu.genLepton() ) 
 	treeVars_["muGenMatch"] = 1;

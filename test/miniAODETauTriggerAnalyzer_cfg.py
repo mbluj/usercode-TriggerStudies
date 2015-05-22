@@ -51,9 +51,9 @@ process.eLooseTau = cms.EDAnalyzer(
         "hltOverlapFilterIsoEle22WP75GsfLooseIsoPFTau20", # HLT_Ele22_eta2p1_WP75_Gsf_LooseIsoPFTau20_v1
         "hltL1sL1IsoEG20erTauJet20er", # L1 of HLT_Ele22_eta2p1_WP75_Gsf_LooseIsoPFTau20_v1
         #        
-        "hltOverlapFilterIsoEle27WP75GsfLooseIsoPFTau20" # HLT_Ele27_eta2p1_WP75_Gsf_LooseIsoPFTau20_v1
+        "hltOverlapFilterIsoEle27WP75GsfLooseIsoPFTau20", # HLT_Ele27_eta2p1_WP75_Gsf_LooseIsoPFTau20_v1
         #
-        "hltOverlapFilterIsoEle32WP75GsfLooseIsoPFTau20" # HLT_Ele32_eta2p1_WP75_Gsf_LooseIsoPFTau20_v1
+        "hltOverlapFilterIsoEle32WP75GsfLooseIsoPFTau20", # HLT_Ele32_eta2p1_WP75_Gsf_LooseIsoPFTau20_v1
         ## common loosePFTau20 filters (w/o checking overlap wrt lepton)
         "hltPFTau20Track",
         "hltPFTau20TrackLooseIso",
