@@ -1,0 +1,4 @@
+<bin file="effTau.C" name="effTau">
+  <use name="root"/>
+  <use name="roofit"/>
+</bin>
