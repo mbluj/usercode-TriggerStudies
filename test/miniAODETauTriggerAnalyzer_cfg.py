@@ -31,6 +31,7 @@ process.eLooseTau = cms.EDAnalyzer(
     electrons = cms.InputTag("preSelectedElectrons"),
     #taus = cms.InputTag("slimmedTaus"),
     taus = cms.InputTag("preSelectedTaus"),
+    met = cms.InputTag("slimmedMETs"),
     vertices = cms.InputTag("offlineSlimmedPrimaryVertices"),
     electronTriggers = cms.vstring(  #version number is ignored, so can be replaced by wildcard (*) or dropped
         "HLT_Ele27_eta2p1_WP75_Gsf_v*",

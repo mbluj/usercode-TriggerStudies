@@ -26,6 +26,7 @@
 
 #include "DataFormats/PatCandidates/interface/Electron.h"
 #include "DataFormats/PatCandidates/interface/Tau.h"
+#include "DataFormats/PatCandidates/interface/MET.h"
 
 #include "DataFormats/Math/interface/deltaR.h"
 
@@ -55,6 +56,7 @@ private:
 
   edm::EDGetTokenT<pat::ElectronCollection> els_;
   edm::EDGetTokenT<pat::TauCollection> taus_;
+  edm::EDGetTokenT<pat::METCollection> mets_;
   edm::EDGetTokenT<reco::VertexCollection> vertices_;
 
   //std::vector<std::string> electronTriggers_;
@@ -79,6 +81,7 @@ MiniAODETauTriggerAnalyzer::MiniAODETauTriggerAnalyzer(const edm::ParameterSet& 
   triggerPrescales_(consumes<pat::PackedTriggerPrescales>(iConfig.getParameter<edm::InputTag>("prescales"))),
   els_(consumes<pat::ElectronCollection>(iConfig.getParameter<edm::InputTag>("electrons"))),
   taus_(consumes<pat::TauCollection>(iConfig.getParameter<edm::InputTag>("taus"))),
+  mets_(consumes<pat::METCollection>(iConfig.getParameter<edm::InputTag>("met"))),
   vertices_(consumes<reco::VertexCollection>(iConfig.getParameter<edm::InputTag>("vertices"))),
   electronFilters_(iConfig.getParameter<std::vector<std::string> >("electronFilters")),
   tauFilters_(iConfig.getParameter<std::vector<std::string> >("tauFilters")),
@@ -96,12 +99,21 @@ MiniAODETauTriggerAnalyzer::MiniAODETauTriggerAnalyzer(const edm::ParameterSet& 
   bookVariable(tree_,"eEta");
   bookVariable(tree_,"ePhi");
   bookVariable(tree_,"eM");
+  bookVariable(tree_,"eCharge");
   bookVariable(tree_,"tauPt");
   bookVariable(tree_,"tauEta");
   bookVariable(tree_,"tauPhi");
   bookVariable(tree_,"tauM");
+  bookVariable(tree_,"tauCharge");
   bookVariable(tree_,"eGenMatch");
   bookVariable(tree_,"tauGenMatch");
+  bookVariable(tree_,"MEt");
+  bookVariable(tree_,"MEtPhi");
+  bookVariable(tree_,"Mass");
+  bookVariable(tree_,"Mt");
+  bookVariable(tree_,"Vx");
+  bookVariable(tree_,"Vy");
+  bookVariable(tree_,"Vz");
   
   std::vector<std::string> eTrgs( iConfig.getParameter<std::vector<std::string> >("electronTriggers") );
   for(unsigned int i=0; i<eTrgs.size(); ++i)
@@ -209,6 +221,9 @@ void MiniAODETauTriggerAnalyzer::analyze(const edm::Event& iEvent, const edm::Ev
   edm::Handle<reco::VertexCollection> vtxs;
   iEvent.getByToken(vertices_, vtxs);
 
+  edm::Handle<pat::METCollection> mets;
+  iEvent.getByToken(mets_, mets);
+
   treeVars_["run"]   = iEvent.id().run();
   treeVars_["lumi"]  = iEvent.id().luminosityBlock();
   treeVars_["event"] = iEvent.id().event();
@@ -232,6 +247,15 @@ void MiniAODETauTriggerAnalyzer::analyze(const edm::Event& iEvent, const edm::Ev
 
   //At least one vertex
   if(vtxs->size() == 0) return;
+  treeVars_["Vx"] = vtxs->at(0).x();
+  treeVars_["Vy"] = vtxs->at(0).y();
+  treeVars_["Vz"] = vtxs->at(0).z();
+
+  if(mets->size() > 0){
+    treeVars_["MEt"] = mets->at(0).pt();
+    treeVars_["MEtPhi"] = mets->at(0).phi();
+  }
+
 
   for(const pat::Electron &el : *els) {
     if( !isGoodElectron(el,vtxs->at(0)) ) continue;
@@ -247,10 +271,15 @@ void MiniAODETauTriggerAnalyzer::analyze(const edm::Event& iEvent, const edm::Ev
       treeVars_["eEta"] = el.eta();
       treeVars_["ePhi"] = el.phi();
       treeVars_["eM"] = el.mass();
+      treeVars_["eCharge"] = el.charge();
       treeVars_["tauPt"] = tau.pt();
       treeVars_["tauEta"] = tau.eta();
       treeVars_["tauPhi"] = tau.phi();
       treeVars_["tauM"] = tau.mass();
+      treeVars_["tauCharge"] = tau.charge();
+      treeVars_["Mass"] = (tau.p4()+el.p4()).mass();
+      treeVars_["Mt"] = fabs( 2.*el.pt()*mets->at(0).pt()*(1.-cos(deltaPhi(el.phi(),mets->at(0).phi()))));
+
       // gen match
       if(!checkMCMatch_ || el.genLepton() ) 
 	treeVars_["eGenMatch"] = 1;

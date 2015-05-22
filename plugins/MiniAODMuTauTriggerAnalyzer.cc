@@ -26,6 +26,7 @@
 
 #include "DataFormats/PatCandidates/interface/Muon.h"
 #include "DataFormats/PatCandidates/interface/Tau.h"
+#include "DataFormats/PatCandidates/interface/MET.h"
 
 #include "DataFormats/Math/interface/deltaR.h"
 
@@ -55,6 +56,7 @@ private:
 
   edm::EDGetTokenT<pat::MuonCollection> muons_;
   edm::EDGetTokenT<pat::TauCollection> taus_;
+  edm::EDGetTokenT<pat::METCollection> mets_;
   edm::EDGetTokenT<reco::VertexCollection> vertices_;
 
   //std::vector<std::string> muonTriggers_;
@@ -79,6 +81,7 @@ MiniAODMuTauTriggerAnalyzer::MiniAODMuTauTriggerAnalyzer(const edm::ParameterSet
   triggerPrescales_(consumes<pat::PackedTriggerPrescales>(iConfig.getParameter<edm::InputTag>("prescales"))),
   muons_(consumes<pat::MuonCollection>(iConfig.getParameter<edm::InputTag>("muons"))),
   taus_(consumes<pat::TauCollection>(iConfig.getParameter<edm::InputTag>("taus"))),
+  mets_(consumes<pat::METCollection>(iConfig.getParameter<edm::InputTag>("met"))),
   vertices_(consumes<reco::VertexCollection>(iConfig.getParameter<edm::InputTag>("vertices"))),
   muonFilters_(iConfig.getParameter<std::vector<std::string> >("muonFilters")),
   tauFilters_(iConfig.getParameter<std::vector<std::string> >("tauFilters")),
@@ -96,13 +99,23 @@ MiniAODMuTauTriggerAnalyzer::MiniAODMuTauTriggerAnalyzer(const edm::ParameterSet
   bookVariable(tree_,"muEta");
   bookVariable(tree_,"muPhi");
   bookVariable(tree_,"muM");
+  bookVariable(tree_,"muCharge");
   bookVariable(tree_,"tauPt");
   bookVariable(tree_,"tauEta");
   bookVariable(tree_,"tauPhi");
   bookVariable(tree_,"tauM");
+  bookVariable(tree_,"tauCharge");
   bookVariable(tree_,"muGenMatch");
   bookVariable(tree_,"tauGenMatch");
-  
+  bookVariable(tree_,"MEt");
+  bookVariable(tree_,"MEtPhi");
+  bookVariable(tree_,"Mass");
+  bookVariable(tree_,"Mt");
+  bookVariable(tree_,"Vx");
+  bookVariable(tree_,"Vy");
+  bookVariable(tree_,"Vz");
+
+
   std::vector<std::string> muTrgs( iConfig.getParameter<std::vector<std::string> >("muonTriggers") );
   for(unsigned int i=0; i<muTrgs.size(); ++i)
     muonTriggers_.insert( triggerNameWithoutVersion(muTrgs[i]) );
@@ -223,6 +236,8 @@ void MiniAODMuTauTriggerAnalyzer::analyze(const edm::Event& iEvent, const edm::E
   iEvent.getByToken(muons_, muons);
   edm::Handle<pat::TauCollection> taus;
   iEvent.getByToken(taus_, taus);
+  edm::Handle<pat::METCollection> mets;
+  iEvent.getByToken(mets_, mets);
 
   edm::Handle<reco::VertexCollection> vtxs;
   iEvent.getByToken(vertices_, vtxs);
@@ -250,6 +265,14 @@ void MiniAODMuTauTriggerAnalyzer::analyze(const edm::Event& iEvent, const edm::E
 
   //At least one vertex
   if(vtxs->size() == 0) return;
+  treeVars_["Vx"] = vtxs->at(0).x();
+  treeVars_["Vy"] = vtxs->at(0).y();
+  treeVars_["Vz"] = vtxs->at(0).z();
+
+  if(mets->size() > 0){
+    treeVars_["MEt"] = mets->at(0).pt();
+    treeVars_["MEtPhi"] = mets->at(0).phi();
+  }
 
   for(const pat::Muon &mu : *muons) {
     if( !isGoodMuon(mu,vtxs->at(0)) ) continue;
@@ -265,10 +288,14 @@ void MiniAODMuTauTriggerAnalyzer::analyze(const edm::Event& iEvent, const edm::E
       treeVars_["muEta"] = mu.eta();
       treeVars_["muPhi"] = mu.phi();
       treeVars_["muM"] = mu.mass();
+      treeVars_["muCharge"] = mu.charge();
       treeVars_["tauPt"] = tau.pt();
       treeVars_["tauEta"] = tau.eta();
       treeVars_["tauPhi"] = tau.phi();
       treeVars_["tauM"] = tau.mass();
+      treeVars_["tauCharge"] = tau.charge();
+      treeVars_["Mass"] = (tau.p4()+mu.p4()).mass();
+      treeVars_["Mt"] = fabs( 2.*mu.pt()*mets->at(0).pt()*(1.-cos(deltaPhi(mu.phi(),mets->at(0).phi()))));
       // gen match
       if(!checkMCMatch_ || mu.genLepton() ) 
 	treeVars_["muGenMatch"] = 1;

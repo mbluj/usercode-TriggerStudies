@@ -31,6 +31,7 @@ process.muLooseTau = cms.EDAnalyzer(
     muons = cms.InputTag("preSelectedMuons"),
     #taus = cms.InputTag("slimmedTaus"),
     taus = cms.InputTag("preSelectedTaus"),
+    met = cms.InputTag("slimmedMETs"),
     vertices = cms.InputTag("offlineSlimmedPrimaryVertices"),
     muonTriggers = cms.vstring(  #version number is ignored, so can be replaced by wildcard (*) or dropped
         "HLT_IsoMu24_eta2p1_v*",
