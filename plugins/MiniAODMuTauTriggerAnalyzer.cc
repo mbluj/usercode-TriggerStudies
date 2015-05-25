@@ -47,7 +47,9 @@ private:
   void bookVariable(TTree *t=0, std::string var="foo");
   void cleanFilterVars();
   std::string triggerNameWithoutVersion(const std::string &triggerName);
-  bool isGoodMuon(const pat::Muon &aMu, const reco::Vertex & vtx, bool useOldId=true);
+  float muonIso(const pat::Muon &aMu, float dBetaFactor=0.5, bool allCharged=false);
+  bool isGoodMuon(const pat::Muon &aMu, const reco::Vertex & vtx, bool useOldId=false, 
+		  float dBetaFactor=0.5, bool allCharged=false);
   bool isGoodTau(const pat::Tau &aTau);
 
   edm::EDGetTokenT<edm::TriggerResults> triggerBits_;
@@ -174,7 +176,19 @@ std::string MiniAODMuTauTriggerAnalyzer::triggerNameWithoutVersion(const std::st
   return triggerNameWithoutVersion;
 }
 
-bool MiniAODMuTauTriggerAnalyzer::isGoodMuon(const pat::Muon &aMu, const reco::Vertex & vtx, bool useOldId)
+float MiniAODMuTauTriggerAnalyzer::muonIso(const pat::Muon &aMu, float dBetaFactor, bool allCharged)
+{
+  float iso = std::max((float)0.0,aMu.userIsolation("pfPhotons") + aMu.userIsolation("pfNeutralHadrons") - dBetaFactor*aMu.userIsolation("pfPUChargedHadrons") );
+  if(allCharged)
+    iso += aMu.userIsolation("pfChargedAll");
+  else
+    iso += aMu.userIsolation("pfChargedHadrons");
+
+  return iso;
+}
+      
+
+bool MiniAODMuTauTriggerAnalyzer::isGoodMuon(const pat::Muon &aMu, const reco::Vertex & vtx, bool useOldId, float dBetaFactor, bool allCharged)
 {
   //std::cout<<"Checking mu: pt="<<aMu.pt()<<", eta="<<aMu.eta()<<", phi="<<aMu.phi()<<std::endl;
   // kinematics
@@ -186,12 +200,13 @@ bool MiniAODMuTauTriggerAnalyzer::isGoodMuon(const pat::Muon &aMu, const reco::V
     if( !(aMu.normChi2() < 10.) ) return false;
     if( !(aMu.globalTrack()->hitPattern().numberOfValidMuonHits() > 0) ) return false;
     if( !(aMu.numberOfMatchedStations() > 1) ) return false;
-    if( !(fabs( aMu.muonBestTrack()->dxy( vtx.position() ) ) < 0.2) ) return false; //FIXME: provide vertex
-    if( !(fabs( aMu.muonBestTrack()->dz( vtx.position() ) ) < 0.5) ) return false; //FIXME: provide vertex
+    if( !(fabs( aMu.muonBestTrack()->dxy( vtx.position() ) ) < 0.2) ) return false;
+    if( !(fabs( aMu.muonBestTrack()->dz( vtx.position() ) ) < 0.5) ) return false;
     if( !(aMu.innerTrack()->hitPattern().numberOfValidPixelHits() > 0) ) return false;
     if( !(aMu.innerTrack()->hitPattern().trackerLayersWithMeasurement() > 5) ) return false;
   }
   else {
+    // Medium mu
     bool isGlb = ( aMu.isGlobalMuon() &&
 		   aMu.normChi2() < 3 &&
 		   aMu.combinedQuality().chi2LocalPosition < 12 && //FIXME: accessible in miniAOD??
@@ -200,11 +215,11 @@ bool MiniAODMuTauTriggerAnalyzer::isGoodMuon(const pat::Muon &aMu, const reco::V
 		    aMu.segmentCompatibility() >=  (isGlb ? 0.303 : 0.451) );
     if( !isGood) return false;
   }
+  // Vertex
+  if( !(fabs( aMu.muonBestTrack()->dxy( vtx.position() ) ) < 0.045) ) return false;
+  if( !(fabs( aMu.muonBestTrack()->dz( vtx.position() ) ) < 0.2) ) return false;
   // Iso
-  float iso = aMu.userIsolation("pfChargedAll") +
-    std::max(0.0,aMu.userIsolation("pfPhotons") + aMu.userIsolation("pfNeutralHadrons") - 0.5*aMu.userIsolation("pfPUChargedHadrons") ) +
-    0;
-  if( iso > isoMu_ ) return false;
+  if( muonIso(aMu, dBetaFactor=0.5, allCharged) > isoMu_ ) return false;
 
   return true;
 }
@@ -282,6 +297,8 @@ void MiniAODMuTauTriggerAnalyzer::analyze(const edm::Event& iEvent, const edm::E
       if( deltaR2(tau,mu) < 0.5*0.5) continue;
       //FIXME OS??
       if( !isGoodTau(tau) ) continue;
+      // Vertex
+      if( tau.vertex().z() != vtxs->at(0).z() ) continue;
       //std::cout<<"Tau: pt="<<tau.pt()<<", eta="<<tau.eta()<<", phi="<<tau.phi()<<std::endl;
       //std::cout<<"DR(mu,tau)="<<deltaR(tau,mu)<<std::endl;
       treeVars_["muPt"] = mu.pt();

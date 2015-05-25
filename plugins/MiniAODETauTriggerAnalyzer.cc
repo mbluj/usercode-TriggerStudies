@@ -47,7 +47,12 @@ private:
   void bookVariable(TTree *t=0, std::string var="foo");
   void cleanFilterVars();
   std::string triggerNameWithoutVersion(const std::string &triggerName);
-  bool isGoodElectron(const pat::Electron &aEl, const reco::Vertex & vtx);
+  float electronIso(const pat::Electron &aEl, float dBetaFactor=0.5, bool allCharged=false);
+  bool electronId(const pat::Electron &aEl, 
+		  std::string idName="cutBasedElectronID-CSA14-PU20bx25-V0-standalone-tight");//FIXME
+  bool isGoodElectron(const pat::Electron &aEl, const reco::Vertex & vtx,
+		      std::string elId="cutBasedElectronID-CSA14-PU20bx25-V0-standalone-tight",
+		      float dBetaFactor=0.5, bool allCharged=false);
   bool isGoodTau(const pat::Tau &aTau);
 
   edm::EDGetTokenT<edm::TriggerResults> triggerBits_;
@@ -172,20 +177,37 @@ std::string MiniAODETauTriggerAnalyzer::triggerNameWithoutVersion(const std::str
     triggerNameWithoutVersion.replace(triggerNameWithoutVersion.length()-1, 1, "");
   return triggerNameWithoutVersion;
 }
+float MiniAODETauTriggerAnalyzer::electronIso(const pat::Electron &aEl, float dBetaFactor, bool allCharged){
 
-bool MiniAODETauTriggerAnalyzer::isGoodElectron(const pat::Electron &aEl, const reco::Vertex & vtx)
+  float iso = std::max((float)0.0,aEl.userIsolation("pfPhotons") + aEl.userIsolation("pfNeutralHadrons") 
+		       - dBetaFactor*aEl.userIsolation("pfPUChargedHadrons") );
+  if(allCharged)
+    iso += aEl.userIsolation("pfChargedAll");
+  else
+    iso += aEl.userIsolation("pfChargedHadrons");
+
+  return iso;
+}
+
+bool MiniAODETauTriggerAnalyzer::electronId(const pat::Electron &aEl, std::string idName){//FIXME
+
+  return aEl.electronID(idName);
+}
+
+bool MiniAODETauTriggerAnalyzer::isGoodElectron(const pat::Electron &aEl, const reco::Vertex & vtx, std::string elId, float dBetaFactor, bool allCharged)
 {
   //std::cout<<"Checking e: pt="<<aEl.pt()<<", eta="<<aEl.eta()<<", phi="<<aEl.phi()<<std::endl;
   // kinematics
   if(aEl.pt() < minPtEl_) return false;
   if(fabs( aEl.eta() ) > maxEtaEl_) return false;
   // e-Id
-  //FIXME
+  if(elId != "")
+    if( !electronId(aEl, elId) ) return false;  //FIXME
+  // Vertex
+  if( !(fabs( aEl.gsfTrack()->dxy( vtx.position() ) ) < 0.045) ) return false;
+  if( !(fabs( aEl.gsfTrack()->dz( vtx.position() ) ) < 0.2) ) return false;
   // Iso
-  float iso = aEl.userIsolation("pfChargedAll") +
-    std::max(0.0,aEl.userIsolation("pfPhotons") + aEl.userIsolation("pfNeutralHadrons") - 0.5*aEl.userIsolation("pfPUChargedHadrons") ) +
-    0;
-  if( iso > isoEl_ ) return false;
+  if( electronIso(aEl,dBetaFactor,allCharged) > isoEl_ ) return false;
 
   return true;
 }
@@ -199,6 +221,8 @@ bool MiniAODETauTriggerAnalyzer::isGoodTau(const pat::Tau &aTau)
   // Id
   for(unsigned int i=0; i<tauIds_.size(); ++i)
     if(aTau.tauID(tauIds_[i]) < 0.5) return false;
+  //
+  //if( !(aTau.zImpact() > 0.5 || aTau.zImpact() < -1.5) ) return false; //FIXME: what is this?
 
   return true;
 }

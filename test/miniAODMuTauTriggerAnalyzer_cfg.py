@@ -35,11 +35,13 @@ process.muLooseTau = cms.EDAnalyzer(
     met = cms.InputTag("slimmedMETs"),
     vertices = cms.InputTag("offlineSlimmedPrimaryVertices"),
     muonTriggers = cms.vstring(  #version number is ignored, so can be replaced by wildcard (*) or dropped
-        "HLT_IsoMu24_eta2p1_v*",
+        "HLT_IsoMu24_eta2p1_v*", # unp'ed at 1.4e34
+        "HLT_IsoMu20_eta2p1_v*", # unp'ed at 7e33
         "HLT_IsoMu24_eta2p1_IterTrk02_v*", # Phys'14
     ),
     muonFilters = cms.vstring(
         "hltL3crIsoL1sMu20Eta2p1L1f0L2f10QL3f24QL3trkIsoFiltered0p09", # HLT_IsoMu24_eta2p1_v1
+        "hltL3crIsoL1sMu16Eta2p1L1f0L2f10QL3f20QL3trkIsoFiltered0p09", # HLT_IsoMu20_eta2p1_v1
         "hltL3crIsoL1sMu20Eta2p1L1f0L2f20QL3f24QL3crIsoRhoFiltered0p15IterTrk02", # HLT_IsoMu24_eta2p1_IterTrk02_v1
     ),
     tauFilters = cms.vstring(
@@ -65,7 +67,7 @@ process.muLooseTau = cms.EDAnalyzer(
         "hltPFTau40TrackPt1MediumIsolationReg",
         "hltPFTau40TrackPt1MediumIsolationL1HLTMatchedReg",
     ),
-    minPtMu = cms.double(25.),
+    minPtMu = cms.double(21.),
     maxEtaMu = cms.double(2.1),
     isoMu = cms.double(0.15),
     minPtTau = cms.double(18.),
@@ -139,9 +141,9 @@ process.hltFilter2 = hlt.hltHighLevel.clone(
 process.preSelectedMuons = cms.EDFilter(
     "PATMuonSelector",
     src = cms.InputTag("slimmedMuons"),
-    #cut = cms.string("pt > 25. && abs(eta) < 2.1 && isPFMuon && isGlobalMuon && userIsolation(\'pat::PfChargedAllIso\') < 1.5") # PfChargedAllIso=13= \'pfChargedAll\'which is not acceptd due to some reason
-    #cut = cms.string("pt > 25. && abs(eta) < 2.1 && isPFMuon && isGlobalMuon")
-    cut = cms.string("pt > 25. && abs(eta) < 2.1")
+    #cut = cms.string("pt > 20. && abs(eta) < 2.1 && isPFMuon && isGlobalMuon && userIsolation(\'pat::PfChargedAllIso\') < 1.5") # PfChargedAllIso=13= \'pfChargedAll\'which is not acceptd due to some reason
+    #cut = cms.string("pt > 20. && abs(eta) < 2.1 && isPFMuon && isGlobalMuon")
+    cut = cms.string("pt > 20. && abs(eta) < 2.1")
 )
 process.preSelectedMuonsMET = process.preSelectedMuons.clone(
     #cut = cms.string("pt > 17. && abs(eta) < 2.1 && isPFMuon && isGlobalMuon")

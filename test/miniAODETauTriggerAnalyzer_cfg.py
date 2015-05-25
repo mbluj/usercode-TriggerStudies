@@ -35,8 +35,8 @@ process.eLooseTau = cms.EDAnalyzer(
     met = cms.InputTag("slimmedMETs"),
     vertices = cms.InputTag("offlineSlimmedPrimaryVertices"),
     electronTriggers = cms.vstring(  #version number is ignored, so can be replaced by wildcard (*) or dropped
-        "HLT_Ele27_eta2p1_WP75_Gsf_v*",
-        "HLT_Ele32_eta2p1_WP75_Gsf_v*",
+        "HLT_Ele27_eta2p1_WP75_Gsf_v*", # unp'ed at 7e33
+        "HLT_Ele32_eta2p1_WP75_Gsf_v*", # unp'ed at 1.4e34
         #"HLT_Ele27_eta2p1_WP85_Gsf_v*", # Phys'14
         #"HLT_Ele32_eta2p1_WP85_Gsf_v*", # Phys'14
     ),
