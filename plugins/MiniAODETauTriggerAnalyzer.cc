@@ -221,8 +221,6 @@ bool MiniAODETauTriggerAnalyzer::isGoodTau(const pat::Tau &aTau)
   // Id
   for(unsigned int i=0; i<tauIds_.size(); ++i)
     if(aTau.tauID(tauIds_[i]) < 0.5) return false;
-  //
-  //if( !(aTau.zImpact() > 0.5 || aTau.zImpact() < -1.5) ) return false; //FIXME: what is this?
 
   return true;
 }
@@ -289,6 +287,11 @@ void MiniAODETauTriggerAnalyzer::analyze(const edm::Event& iEvent, const edm::Ev
       if( deltaR2(tau,el) < 0.5*0.5) continue;
       //FIXME OS??
       if( !isGoodTau(tau) ) continue;
+      // Vertex
+      if( fabs(tau.vertex().z() - vtxs->at(0).z())>0.0001 ) continue;
+      // z impact at ECAL surface
+      float zImpact = vtxs->at(0).z() + 130./tan(tau.theta());
+      if( !(zImpact > 0.5 || zImpact < -1.5) ) continue; //FIXME: what is this? Why assymetric?
       //std::cout<<"Tau: pt="<<tau.pt()<<", eta="<<tau.eta()<<", phi="<<tau.phi()<<std::endl;
       //std::cout<<"DR(el,tau)="<<deltaR(tau,el)<<std::endl;
       treeVars_["ePt"] = el.pt();

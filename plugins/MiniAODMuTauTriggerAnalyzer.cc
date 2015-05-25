@@ -207,6 +207,7 @@ bool MiniAODMuTauTriggerAnalyzer::isGoodMuon(const pat::Muon &aMu, const reco::V
   }
   else {
     // Medium mu
+    if( !aMu.isLooseMuon() ) return false;
     bool isGlb = ( aMu.isGlobalMuon() &&
 		   aMu.normChi2() < 3 &&
 		   aMu.combinedQuality().chi2LocalPosition < 12 && //FIXME: accessible in miniAOD??
@@ -298,7 +299,7 @@ void MiniAODMuTauTriggerAnalyzer::analyze(const edm::Event& iEvent, const edm::E
       //FIXME OS??
       if( !isGoodTau(tau) ) continue;
       // Vertex
-      if( tau.vertex().z() != vtxs->at(0).z() ) continue;
+      if( fabs(tau.vertex().z() - vtxs->at(0).z())>0.0001 ) continue;
       //std::cout<<"Tau: pt="<<tau.pt()<<", eta="<<tau.eta()<<", phi="<<tau.phi()<<std::endl;
       //std::cout<<"DR(mu,tau)="<<deltaR(tau,mu)<<std::endl;
       treeVars_["muPt"] = mu.pt();

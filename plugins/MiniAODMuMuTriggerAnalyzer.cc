@@ -48,7 +48,8 @@ private:
   void bookVariable(TTree *t=0, std::string var="foo");
   void cleanFilterVars();
   std::string triggerNameWithoutVersion(const std::string &triggerName);
-  bool isGoodMuon(const pat::Muon &aMu, const reco::Vertex & vtx, bool useOldId=true);
+  float muonIso(const pat::Muon &aMu, float dBetaFactor=0.5, bool allCharged=false);
+  bool isGoodMuon(const pat::Muon &aMu, const reco::Vertex & vtx, bool useOldId=false);
 
   edm::EDGetTokenT<edm::TriggerResults> triggerBits_;
   edm::EDGetTokenT<pat::TriggerObjectStandAloneCollection> triggerObjects_;
@@ -98,10 +99,10 @@ MiniAODMuMuTriggerAnalyzer::MiniAODMuMuTriggerAnalyzer(const edm::ParameterSet& 
   bookVariable(tree_,"tagCharge");
   bookVariable(tree_,"probePt");
   bookVariable(tree_,"probeEta");
-  bookVariable(tree_,"probetagPhi");
+  bookVariable(tree_,"probePhi");
   bookVariable(tree_,"probeM");
   bookVariable(tree_,"probeCharge");
-  bookVariable(tree_,"probeGenMatch");
+  bookVariable(tree_,"tagGenMatch");
   bookVariable(tree_,"probeGenMatch");
   bookVariable(tree_,"MEt");
   bookVariable(tree_,"MEtPhi");
@@ -111,9 +112,9 @@ MiniAODMuMuTriggerAnalyzer::MiniAODMuMuTriggerAnalyzer(const edm::ParameterSet& 
   bookVariable(tree_,"Vz");
 
 
-  std::vector<std::string> muTrgs( iConfig.getParameter<std::vector<std::string> >("muonTriggers") );
-  for(unsigned int i=0; i<muTrgs.size(); ++i)
-    tagTriggers_.insert( triggerNameWithoutVersion(muTrgs[i]) );
+  std::vector<std::string> tagTrgs( iConfig.getParameter<std::vector<std::string> >("tagTriggers") );
+  for(unsigned int i=0; i<tagTrgs.size(); ++i)
+    tagTriggers_.insert( triggerNameWithoutVersion(tagTrgs[i]) );
   for(std::set<std::string>::const_iterator it = tagTriggers_.begin(); it != tagTriggers_.end(); ++it)
     bookVariable(tree_,(*it) );
   for(unsigned int i=0; i<tagFilters_.size(); ++i)
@@ -168,6 +169,16 @@ std::string MiniAODMuMuTriggerAnalyzer::triggerNameWithoutVersion(const std::str
     triggerNameWithoutVersion.replace(triggerNameWithoutVersion.length()-1, 1, "");
   return triggerNameWithoutVersion;
 }
+float MiniAODMuMuTriggerAnalyzer::muonIso(const pat::Muon &aMu, float dBetaFactor, bool allCharged)
+{
+  float iso = std::max((float)0.0,aMu.userIsolation("pfPhotons") + aMu.userIsolation("pfNeutralHadrons") - dBetaFactor*aMu.userIsolation("pfPUChargedHadrons") );
+  if(allCharged)
+    iso += aMu.userIsolation("pfChargedAll");
+  else
+    iso += aMu.userIsolation("pfChargedHadrons");
+
+  return iso;
+}
 
 bool MiniAODMuMuTriggerAnalyzer::isGoodMuon(const pat::Muon &aMu, const reco::Vertex & vtx, bool useOldId)
 {
@@ -184,6 +195,8 @@ bool MiniAODMuMuTriggerAnalyzer::isGoodMuon(const pat::Muon &aMu, const reco::Ve
     if( !(aMu.innerTrack()->hitPattern().trackerLayersWithMeasurement() > 5) ) return false;
   }
   else {
+    // Medium mu
+    if( !aMu.isLooseMuon() ) return false;
     bool isGlb = ( aMu.isGlobalMuon() &&
 		   aMu.normChi2() < 3 &&
 		   aMu.combinedQuality().chi2LocalPosition < 12 && //FIXME: accessible in miniAOD??
@@ -192,6 +205,9 @@ bool MiniAODMuMuTriggerAnalyzer::isGoodMuon(const pat::Muon &aMu, const reco::Ve
 		    aMu.segmentCompatibility() >=  (isGlb ? 0.303 : 0.451) );
     if( !isGood) return false;
   }
+  // Vertex                                                                     
+  if( !(fabs( aMu.muonBestTrack()->dxy( vtx.position() ) ) < 0.045) ) return false;
+  if( !(fabs( aMu.muonBestTrack()->dz( vtx.position() ) ) < 0.2) ) return false;
 
   return true;
 }
@@ -251,9 +267,7 @@ void MiniAODMuMuTriggerAnalyzer::analyze(const edm::Event& iEvent, const edm::Ev
     if(tag.pt() < minPtTag_) continue;
     if(fabs( tag.eta() ) > maxEtaTag_) continue;
     // Iso
-    float isoTag = tag.userIsolation("pfChargedAll") +
-      std::max(0.0,tag.userIsolation("pfPhotons") + tag.userIsolation("pfNeutralHadrons") - 0.5*tag.userIsolation("pfPUChargedHadrons") );
-    if( isoTag > isoTag_ ) continue;
+    if( muonIso(tag) > isoTag_ ) continue;
     // id
     if( !isGoodMuon(tag,vtxs->at(0)) ) continue;
     //std::cout<<"Tag muon: pt="<<tag.pt()<<", eta="<<tag.eta()<<", phi="<<tag.phi()<<std::endl;
@@ -263,9 +277,8 @@ void MiniAODMuMuTriggerAnalyzer::analyze(const edm::Event& iEvent, const edm::Ev
       if(probe.pt() < minPtProbe_) continue;
       if(fabs( probe.eta() ) > maxEtaProbe_) continue;
       // Iso
-      float isoProbe = probe.userIsolation("pfChargedAll") +
-	std::max(0.0,probe.userIsolation("pfPhotons") + probe.userIsolation("pfNeutralHadrons") - 0.5*probe.userIsolation("pfPUChargedHadrons") );
-      if( isoProbe > isoProbe_ ) continue;
+      if( muonIso(probe) > isoProbe_ ) continue;
+      //pair
       if( deltaR2(tag,probe) < 0.5*0.5) continue;
       //FIXME OS??
       // id
