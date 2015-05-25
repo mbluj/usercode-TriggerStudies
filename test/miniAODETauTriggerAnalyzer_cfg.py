@@ -17,7 +17,8 @@ process.maxEvents = cms.untracked.PSet(
 process.source = cms.Source("PoolSource",
     fileNames = cms.untracked.vstring(
         #'file:/tmp/mbluj/miniAOD-prod_PAT_GRun_my.root',
-        'root://se.cis.gov.pl:1094//dpm/cis.gov.pl/home/cms/store/user/bluj/GluGluToHToTauTau_M-125_13TeV-powheg-pythia6/GGH125ToTauTau_MiniAOD_GRunV47_v1/8511c3cd7b71dd75a559c65d182442f5/miniAOD_100_1_Xv6.root'
+        #'root://se.cis.gov.pl:1094//dpm/cis.gov.pl/home/cms/store/user/bluj/GluGluToHToTauTau_M-125_13TeV-powheg-pythia6/GGH125ToTauTau_MiniAOD_GRunV47_v1/8511c3cd7b71dd75a559c65d182442f5/miniAOD_100_1_Xv6.root'
+        'root://se.cis.gov.pl:1094//dpm/cis.gov.pl/home/cms/store/user/bluj/GluGluToHToTauTau_M-125_13TeV-powheg-pythia6/GGH125ToTauTau_MiniAOD_GRunV47_v2/6b3acb073896b48a28b982ccc80b3330/miniAOD_100_1_nMQ.root'
     )
 )
 
