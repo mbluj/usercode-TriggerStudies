@@ -75,6 +75,7 @@ private:
   double minPtTau_, maxEtaTau_;
   std::vector<std::string> tauIds_;
 
+  std::string elId_;
   bool checkMCMatch_;
 
   TTree *tree_;
@@ -96,6 +97,7 @@ MiniAODETauTriggerAnalyzer::MiniAODETauTriggerAnalyzer(const edm::ParameterSet& 
   minPtTau_(iConfig.getParameter<double>("minPtTau")),
   maxEtaTau_(iConfig.getParameter<double>("maxEtaTau")),
   tauIds_(iConfig.getParameter<std::vector<std::string> >("tauIds")),
+  elId_(iConfig.getParameter<std::string>("elId")),
   checkMCMatch_(iConfig.getParameter<bool>("checkMCMatch"))
 {
   edm::Service<TFileService> fs;

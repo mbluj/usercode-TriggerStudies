@@ -63,6 +63,7 @@ process.eLooseTau = cms.EDAnalyzer(
     minPtEl = cms.double(30.),
     maxEtaEl = cms.double(2.1),
     isoEl = cms.double(0.15),
+    elId = cms.string("NoImplemented"),
     minPtTau = cms.double(18.),
     maxEtaTau = cms.double(2.3),
     tauIds = cms.vstring(
