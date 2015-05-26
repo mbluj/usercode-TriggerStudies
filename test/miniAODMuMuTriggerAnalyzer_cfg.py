@@ -60,6 +60,8 @@ process.muMu = cms.EDAnalyzer(
     minPtProbe = cms.double(15.),
     maxEtaProbe = cms.double(2.1),
     isoProbe = cms.double(0.1),
+    tagTightId = cms.bool(False),
+    probeTightId = cms.bool(False),
     checkMCMatch = cms.bool(True)
 )
 

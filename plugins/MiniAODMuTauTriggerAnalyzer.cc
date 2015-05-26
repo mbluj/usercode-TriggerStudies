@@ -72,7 +72,7 @@ private:
   double minPtTau_, maxEtaTau_;
   std::vector<std::string> tauIds_;
 
-  bool useMuTight_;
+  bool muTightId_;
   bool checkMCMatch_;
 
   TTree *tree_;
@@ -94,7 +94,7 @@ MiniAODMuTauTriggerAnalyzer::MiniAODMuTauTriggerAnalyzer(const edm::ParameterSet
   minPtTau_(iConfig.getParameter<double>("minPtTau")),
   maxEtaTau_(iConfig.getParameter<double>("maxEtaTau")),
   tauIds_(iConfig.getParameter<std::vector<std::string> >("tauIds")),
-  useMuTight_(iConfig.getParameter<bool>("useMuTight")),
+  muTightId_(iConfig.getParameter<bool>("muTightId")),
   checkMCMatch_(iConfig.getParameter<bool>("checkMCMatch"))
 {
   edm::Service<TFileService> fs;
@@ -293,7 +293,7 @@ void MiniAODMuTauTriggerAnalyzer::analyze(const edm::Event& iEvent, const edm::E
   }
 
   for(const pat::Muon &mu : *muons) {
-    if( !isGoodMuon(mu,vtxs->at(0),useMuTight_) ) continue;
+    if( !isGoodMuon(mu,vtxs->at(0),muTightId_) ) continue;
     //std::cout<<"Muon: pt="<<mu.pt()<<", eta="<<mu.eta()<<", phi="<<mu.phi()<<std::endl;
     
     for(const pat::Tau &tau : *taus) {

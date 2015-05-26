@@ -68,6 +68,7 @@ private:
   double minPtTag_, maxEtaTag_, isoTag_;
   double minPtProbe_, maxEtaProbe_, isoProbe_;
 
+  bool tagTightId_, probeTightId_;
   bool checkMCMatch_;
 
   TTree *tree_;
@@ -88,6 +89,8 @@ MiniAODMuMuTriggerAnalyzer::MiniAODMuMuTriggerAnalyzer(const edm::ParameterSet& 
   minPtProbe_(iConfig.getParameter<double>("minPtProbe")),
   maxEtaProbe_(iConfig.getParameter<double>("maxEtaProbe")),
   isoProbe_(iConfig.getParameter<double>("isoProbe")),
+  tagTightId_(iConfig.getParameter<bool>("tagTightId")),
+  probeTightId_(iConfig.getParameter<bool>("probeTightId")),
   checkMCMatch_(iConfig.getParameter<bool>("checkMCMatch"))
 {
   edm::Service<TFileService> fs;
@@ -269,7 +272,7 @@ void MiniAODMuMuTriggerAnalyzer::analyze(const edm::Event& iEvent, const edm::Ev
     // Iso
     if( muonIso(tag) > isoTag_ ) continue;
     // id
-    if( !isGoodMuon(tag,vtxs->at(0)) ) continue;
+    if( !isGoodMuon(tag,vtxs->at(0),tagTightId_) ) continue;
     //std::cout<<"Tag muon: pt="<<tag.pt()<<", eta="<<tag.eta()<<", phi="<<tag.phi()<<std::endl;
     
     for(const pat::Muon &probe : *muons) {
@@ -282,7 +285,7 @@ void MiniAODMuMuTriggerAnalyzer::analyze(const edm::Event& iEvent, const edm::Ev
       if( deltaR2(tag,probe) < 0.5*0.5) continue;
       //FIXME OS??
       // id
-      if( !isGoodMuon(probe,vtxs->at(0)) ) continue;
+      if( !isGoodMuon(probe,vtxs->at(0),probeTightId_) ) continue;
       //std::cout<<"Probe muon: pt="<<probe.pt()<<", eta="<<probe.eta()<<", phi="<<probe.phi()<<std::endl;
       //std::cout<<"DR(tag,probe)="<<deltaR(tag,probe)<<std::endl;
       treeVars_["tagPt"] = tag.pt();
