@@ -45,7 +45,9 @@ process.eE = cms.EDAnalyzer(
         #"hltEle32WP85GsfTrackIsoFilter", # HLT_Ele32_eta2p1_WP85_Gsf_v1
     ),
     probeFilters = cms.vstring(
-        # control path HLT_DoubleEle24_22_eta2p1_WP75_Gsf_v1
+        # control path HLT_DoubleEle24_22_eta2p1_WP75_Gsf_v1 
+        # (for most of the following filters saveTags=False thus info not stored)
+        "hltEle24Ele22leg2EtFilter",
         "hltEle24Ele22WP75leg2ClusterShapeFilter",
         "hltEle24Ele22WP75leg2HcEFilter",
         "hltEle24Ele22WP75leg2EcalIsoFilter",
@@ -56,6 +58,8 @@ process.eE = cms.EDAnalyzer(
         "hltEle24Ele22WP75Gsfleg2DphiFilter",
         "hltEle24Ele22WP75Gsfleg2TrackIsoFilter",
         # control path HLT_Ele22_eta2p1_WP75_Gsf_v1 (p'ed in data, for x-check with MC)
+        # (for most of the following filters saveTags=False thus info not stored)
+        "hltSingleEG22EtFilter",
         "hltSingleEle22WP75ClusterShapeFilter",
         "hltSingleEle22WP75HcEFilter",
         "hltSingleEle22WP75EcalIsoFilter",
