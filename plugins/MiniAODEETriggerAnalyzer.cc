@@ -10,6 +10,7 @@
 #include <string>
 #include <algorithm>
 #include <set>
+#include <utility>
 
 // user include files
 #include "FWCore/Framework/interface/Frameworkfwd.h"
@@ -38,6 +39,68 @@
 
 #include "TTree.h"
 
+struct CutBasedElId{
+  CutBasedElId(){};
+  CutBasedElId(std::string name,
+	       std::pair<float,float> dEtaInCut,
+	       std::pair<float,float> dPhiInCut,
+	       std::pair<float,float> sigmaIEtaIEtaCut,
+	       std::pair<float,float> HoECut,
+	       std::pair<float,float> EoPCut):
+    name_(name),
+    dEtaInCut_(dEtaInCut),dPhiInCut_(dPhiInCut),sigmaIEtaIEtaCut_(sigmaIEtaIEtaCut),
+    HoECut_(HoECut),EoPCut_(EoPCut)
+  {};
+  CutBasedElId(std::string name,
+	       float dEtaInCutEB, float dEtaInCutEE,
+	       float dPhiInCutEB, float dPhiInCutEE,
+	       float sigmaIEtaIEtaCutEB, float sigmaIEtaIEtaCutEE,
+	       float HoECutEB, float HoECutEE,
+	       float EoPCutEB, float EoPCutEE):
+    name_(name),
+    dEtaInCut_(dEtaInCutEB,dEtaInCutEE),dPhiInCut_(dPhiInCutEB,dPhiInCutEE),
+    sigmaIEtaIEtaCut_(sigmaIEtaIEtaCutEB,sigmaIEtaIEtaCutEE),
+    HoECut_(HoECutEB,HoECutEE),EoPCut_(EoPCutEB,EoPCutEE)
+  {};
+  ~CutBasedElId(){};
+  std::string name_;
+  std::pair<float,float> dEtaInCut_,dPhiInCut_,sigmaIEtaIEtaCut_,HoECut_,EoPCut_;
+  void setName(std::string name) { name_=name; }
+  bool checkIdEB(float &dEtaIn,
+	       float &dPhiIn,
+	       float &sigmaIEtaIEta,
+	       float &HoE,
+	       float &EoP){
+    if(dEtaIn >= dEtaInCut_.first) return false;
+    if(dPhiIn >= dPhiInCut_.first) return false;
+    if(sigmaIEtaIEta >= sigmaIEtaIEtaCut_.first) return false;
+    if(HoE >= HoECut_.first) return false;
+    if(EoP >= EoPCut_.first) return false;
+    return true;
+  }
+  bool checkIdEE(float &dEtaIn,
+	       float &dPhiIn,
+	       float &sigmaIEtaIEta,
+	       float &HoE,
+	       float &EoP){
+    if(dEtaIn >= dEtaInCut_.second) return false;
+    if(dPhiIn >= dPhiInCut_.second) return false;
+    if(sigmaIEtaIEta >= sigmaIEtaIEtaCut_.second) return false;
+    if(HoE >= HoECut_.second) return false;
+    if(EoP >= EoPCut_.second) return false;
+    return true;
+  }
+  bool checkId(float &dEtaIn,
+               float &dPhiIn,
+               float &sigmaIEtaIEta,
+               float &HoE,
+               float &EoP,
+	       bool isEB){
+    if(isEB) return checkIdEB(dEtaIn,dPhiIn,sigmaIEtaIEta,HoE,EoP);
+    else return checkIdEE(dEtaIn,dPhiIn,sigmaIEtaIEta,HoE,EoP);
+  }
+};
+
 class MiniAODEETriggerAnalyzer : public edm::EDAnalyzer {
 public:
   explicit MiniAODEETriggerAnalyzer(const edm::ParameterSet&);
@@ -53,6 +116,7 @@ private:
   float electronIso(const pat::Electron &aEl, float dBetaFactor=0.5, bool allCharged=false);
   bool electronId(const pat::Electron &aEl,
                   std::string idName="cutBasedElectronID-CSA14-PU20bx25-V0-standalone-tight");//FIXME
+  bool isElIdSupported(std::string idName);
   bool isGoodElectron(const pat::Electron &aEl, const reco::Vertex & vtx, 
 		      std::string idName="cutBasedElectronID-CSA14-PU20bx25-V0-standalone-tight");//FIXME
 
@@ -77,6 +141,8 @@ private:
 
   std::string tagId_, probeId_;
   bool checkMCMatch_;
+
+  std::vector<CutBasedElId> cutBasedIds_;
 
   TTree *tree_;
 };
@@ -199,6 +265,32 @@ float MiniAODEETriggerAnalyzer::electronIso(const pat::Electron &aEl, float dBet
 bool MiniAODEETriggerAnalyzer::electronId(const pat::Electron &aEl, std::string idName){//FIXME
 
   return aEl.electronID(idName);
+}
+
+bool MiniAODEETriggerAnalyzer::isElIdSupported(std::string idName){
+  std::set<std::string> supportedElId;
+  supportedElId.insert("POG_2012_Veto");
+  supportedElId.insert("POG_2012_Loose");
+  supportedElId.insert("POG_2012_Medium");
+  supportedElId.insert("POG_2012_Tight");
+  supportedElId.insert("POG_CSA14_25ns_v1_Veto");
+  supportedElId.insert("POG_CSA14_25ns_v1_Loose");
+  supportedElId.insert("POG_CSA14_25ns_v1_Medium");
+  supportedElId.insert("POG_CSA14_25ns_v1_Tight");
+  supportedElId.insert("POG_CSA14_50ns_v1_Veto");
+  supportedElId.insert("POG_CSA14_50ns_v1_Loose");
+  supportedElId.insert("POG_CSA14_50ns_v1_Medium");
+  supportedElId.insert("POG_CSA14_50ns_v1_Tight");
+  supportedElId.insert("POG_PHYS14_25ns_v1_Veto");
+  supportedElId.insert("POG_PHYS14_25ns_v1_Loose");
+  supportedElId.insert("POG_PHYS14_25ns_v1_Medium");
+  supportedElId.insert("POG_PHYS14_25ns_v1_Tight");
+  //firstly check among custom IDs
+  if(supportedElId.find(idName) != supportedElId.end()) return true;
+  //then inside patObj 
+  //how??
+
+  return false;
 }
 
 bool MiniAODEETriggerAnalyzer::isGoodElectron(const pat::Electron &aEl, const reco::Vertex & vtx, std::string elId)
