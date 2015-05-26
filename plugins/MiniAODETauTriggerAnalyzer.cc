@@ -327,7 +327,7 @@ void MiniAODETauTriggerAnalyzer::analyze(const edm::Event& iEvent, const edm::Ev
 	    ( trgObj.hasTriggerObjectType(trigger::TriggerElectron) || trgObj.hasTriggerObjectType(trigger::TriggerPhoton) ) ) {
 	  for(std::string &label : electronFilters_){
 	    if( trgObj.hasFilterLabel(label) ) { 
-	      treeVars_[label] = 1;	    
+	      treeVars_[label] = trgObj.pt();	    
 	      /*
 	      std::cout<<"\tFilter \""<<label<<"\" matched to electron, DR="<<deltaR(trgObj,el)<<std::endl
 		       <<"\t\tTrigger object: pt="<<trgObj.pt()<<", eta="<<trgObj.eta()<<", phi="<<trgObj.phi() << std::endl; 
@@ -340,7 +340,7 @@ void MiniAODETauTriggerAnalyzer::analyze(const edm::Event& iEvent, const edm::Ev
 	    ( trgObj.hasTriggerObjectType(trigger::TriggerTau) || trgObj.hasTriggerObjectType(trigger::TriggerL1TauJet) ) ) {
 	  for(std::string &label : tauFilters_){
 	    if( trgObj.hasFilterLabel(label) ) { 
-	      treeVars_[label] = 1;	    
+	      treeVars_[label] = trgObj.pt();	    
 	      /*
 	      std::cout<<"\tFilter \""<<label<<"\" matched to tau, DR="<<deltaR(trgObj,tau)<<std::endl
 		       <<"\t\tTrigger object: pt="<<trgObj.pt()<<", eta="<<trgObj.eta()<<", phi="<<trgObj.phi() << std::endl; 
