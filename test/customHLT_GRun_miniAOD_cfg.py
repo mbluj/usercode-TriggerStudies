@@ -115,7 +115,7 @@ from TriggerStudies.Tau.miniAOD_my_PAT_cff import *
 # Output definition
 addMiniAODOutput(process, outFile='miniAOD.root')
 process.MINIAODSIMoutput.outputCommands.append('keep *_TriggerResults_*_*')
-process.MINIAODSIMoutput.outputCommands.append('keep *_l1extraParticles_*_*')
+process.MINIAODSIMoutput.outputCommands.append('keep *_hltL1extraParticles_*_*')
 
 # PAT & MiniAOD scheduled sequences
 addMiniAODSched(process)
