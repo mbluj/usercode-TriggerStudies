@@ -77,6 +77,7 @@ process.muLooseTau = cms.EDAnalyzer(
         #"byLooseCombinedIsolationDeltaBetaCorr3Hits", #applied at presel level
         "againstMuonTight3", 
     ),
+    useMuTight = cms.bool(False),
     checkMCMatch = cms.bool(True)
 )
 
