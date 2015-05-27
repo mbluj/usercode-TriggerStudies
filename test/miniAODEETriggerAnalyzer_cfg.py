@@ -17,8 +17,10 @@ process.maxEvents = cms.untracked.PSet(
 process.source = cms.Source("PoolSource",
     fileNames = cms.untracked.vstring(
         #'file:/tmp/mbluj/miniAOD-prod_PAT_GRun_my.root',
-        'root://se.cis.gov.pl:1094//dpm/cis.gov.pl/home/cms/store/user/bluj/DYToEE_M-50_Tune4C_13TeV-pythia8/DYToEE_MiniAOD_GRunV47_v2/6b3acb073896b48a28b982ccc80b3330/miniAOD_10_1_CBb.root',
-        'root://se.cis.gov.pl:1094//dpm/cis.gov.pl/home/cms/store/user/bluj/DYToEE_M-50_Tune4C_13TeV-pythia8/DYToEE_MiniAOD_GRunV47_v2/6b3acb073896b48a28b982ccc80b3330/miniAOD_11_1_FEP.root',
+        #'root://se.cis.gov.pl:1094//dpm/cis.gov.pl/home/cms/store/user/bluj/DYToEE_M-50_Tune4C_13TeV-pythia8/DYToEE_MiniAOD_GRunV47_v2/6b3acb073896b48a28b982ccc80b3330/miniAOD_10_1_CBb.root',
+        #'root://se.cis.gov.pl:1094//dpm/cis.gov.pl/home/cms/store/user/bluj/DYToEE_M-50_Tune4C_13TeV-pythia8/DYToEE_MiniAOD_GRunV47_v2/6b3acb073896b48a28b982ccc80b3330/miniAOD_11_1_FEP.root',
+        'root://se.cis.gov.pl:1094//dpm/cis.gov.pl/home/cms/store/user/bluj/DYToEE_M-50_Tune4C_13TeV-pythia8/DYToEE_MiniAOD_GRunV47_v3/c72d2c1790a6b87324592002758e580a/miniAOD_55_1_rJo.root',
+        'root://se.cis.gov.pl:1094//dpm/cis.gov.pl/home/cms/store/user/bluj/DYToEE_M-50_Tune4C_13TeV-pythia8/DYToEE_MiniAOD_GRunV47_v3/c72d2c1790a6b87324592002758e580a/miniAOD_58_1_H8x.root',
     )
 )
 
@@ -70,10 +72,10 @@ process.eE = cms.EDAnalyzer(
         "hltSingleEle22WP75GsfDphiFilter",
         "hltSingleEle22WP75GsfTrackIsoFilter",
     ),
-    l1NoIsoEGs = cms.InputTag("l1extraParticles:NonIsolated"), #FIXME: from RECO
-    l1IsoEGs = cms.InputTag("l1extraParticles:Isolated"), #FIXME: from RECO
-    #l1NoIsoEGs = cms.InputTag("hltL1extraParticles:NonIsolated"), #FIXME: from TauHLT (missing in v2)
-    #l1IsoEGs = cms.InputTag("hltL1extraParticles:Isolated"), #FIXME: from TauHLT (missing in v2)
+    #l1NoIsoEGs = cms.InputTag("l1extraParticles:NonIsolated"), #FIXME: from RECO
+    #l1IsoEGs = cms.InputTag("l1extraParticles:Isolated"), #FIXME: from RECO
+    l1NoIsoEGs = cms.InputTag("hltL1extraParticles:NonIsolated"), #FIXME: from TauHLT (missing in v2)
+    l1IsoEGs = cms.InputTag("hltL1extraParticles:Isolated"), #FIXME: from TauHLT (missing in v2)
     minPtTag = cms.double(30.),
     maxEtaTag = cms.double(2.1),
     isoTag = cms.double(0.15),
