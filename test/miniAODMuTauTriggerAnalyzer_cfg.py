@@ -18,7 +18,8 @@ process.source = cms.Source("PoolSource",
     fileNames = cms.untracked.vstring(
         #'file:/tmp/mbluj/miniAOD-prod_PAT_GRun_my.root',
         #'root://se.cis.gov.pl:1094//dpm/cis.gov.pl/home/cms/store/user/bluj/GluGluToHToTauTau_M-125_13TeV-powheg-pythia6/GGH125ToTauTau_MiniAOD_GRunV47_v1/8511c3cd7b71dd75a559c65d182442f5/miniAOD_100_1_Xv6.root'
-        'root://se.cis.gov.pl:1094//dpm/cis.gov.pl/home/cms/store/user/bluj/GluGluToHToTauTau_M-125_13TeV-powheg-pythia6/GGH125ToTauTau_MiniAOD_GRunV47_v2/6b3acb073896b48a28b982ccc80b3330/miniAOD_100_1_nMQ.root'
+        #'root://se.cis.gov.pl:1094//dpm/cis.gov.pl/home/cms/store/user/bluj/GluGluToHToTauTau_M-125_13TeV-powheg-pythia6/GGH125ToTauTau_MiniAOD_GRunV47_v2/6b3acb073896b48a28b982ccc80b3330/miniAOD_100_1_nMQ.root'
+        'root://se.cis.gov.pl:1094//dpm/cis.gov.pl/home/cms/store/user/bluj/GluGluToHToTauTau_M-125_13TeV-powheg-pythia6/GGH125ToTauTau_MiniAOD_GRunV47_v3/c72d2c1790a6b87324592002758e580a/miniAOD_10_1_og1.root'
     )
 )
 
@@ -32,6 +33,12 @@ process.muLooseTau = cms.EDAnalyzer(
     muons = cms.InputTag("preSelectedMuons"),
     #taus = cms.InputTag("slimmedTaus"),
     taus = cms.InputTag("preSelectedTaus"),
+    #l1CenJets = cms.InputTag("l1extraParticles:Central"), #FIXME: from RECO      
+    #l1TauJets = cms.InputTag("l1extraParticles:Tau"), #FIXME: from RECO      
+    #l1IsoTaus = cms.InputTag("l1extraParticles:IsoTau"), #FIXME: from RECO (missing in Phys14 and 50ns samples)
+    l1CenJets = cms.InputTag("hltL1extraParticles:Central"), #FIXME: from TauHLT (missing in v2)
+    l1TauJets = cms.InputTag("hltL1extraParticles:Tau"), #FIXME: from TauHLT (missing in v2)
+    l1IsoTaus = cms.InputTag("hltL1extraParticles:IsoTau"), #FIXME: from TauHLT (missing in v2 and 50ns samples)
     met = cms.InputTag("slimmedMETs"),
     vertices = cms.InputTag("offlineSlimmedPrimaryVertices"),
     muonTriggers = cms.vstring(  #version number is ignored, so can be replaced by wildcard (*) or dropped

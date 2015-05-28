@@ -27,6 +27,8 @@
 #include "DataFormats/PatCandidates/interface/Muon.h"
 #include "DataFormats/PatCandidates/interface/Tau.h"
 #include "DataFormats/PatCandidates/interface/MET.h"
+#include "DataFormats/L1Trigger/interface/L1JetParticle.h"
+#include "DataFormats/L1Trigger/interface/L1JetParticleFwd.h"
 
 #include "DataFormats/Math/interface/deltaR.h"
 
@@ -58,6 +60,7 @@ private:
 
   edm::EDGetTokenT<pat::MuonCollection> muons_;
   edm::EDGetTokenT<pat::TauCollection> taus_;
+  edm::EDGetTokenT<l1extra::L1JetParticleCollection> l1CenJets_, l1TauJets_, l1IsoTaus_;
   edm::EDGetTokenT<pat::METCollection> mets_;
   edm::EDGetTokenT<reco::VertexCollection> vertices_;
 
@@ -84,6 +87,9 @@ MiniAODMuTauTriggerAnalyzer::MiniAODMuTauTriggerAnalyzer(const edm::ParameterSet
   triggerPrescales_(consumes<pat::PackedTriggerPrescales>(iConfig.getParameter<edm::InputTag>("prescales"))),
   muons_(consumes<pat::MuonCollection>(iConfig.getParameter<edm::InputTag>("muons"))),
   taus_(consumes<pat::TauCollection>(iConfig.getParameter<edm::InputTag>("taus"))),
+  l1CenJets_(consumes<l1extra::L1JetParticleCollection>(iConfig.getParameter<edm::InputTag>("l1CenJets"))),
+  l1TauJets_(consumes<l1extra::L1JetParticleCollection>(iConfig.getParameter<edm::InputTag>("l1TauJets"))),
+  l1IsoTaus_(consumes<l1extra::L1JetParticleCollection>(iConfig.getParameter<edm::InputTag>("l1IsoTaus"))),
   mets_(consumes<pat::METCollection>(iConfig.getParameter<edm::InputTag>("met"))),
   vertices_(consumes<reco::VertexCollection>(iConfig.getParameter<edm::InputTag>("vertices"))),
   muonFilters_(iConfig.getParameter<std::vector<std::string> >("muonFilters")),
@@ -129,6 +135,9 @@ MiniAODMuTauTriggerAnalyzer::MiniAODMuTauTriggerAnalyzer(const edm::ParameterSet
     bookVariable(tree_,muonFilters_[i]);
   for(unsigned int i=0; i<tauFilters_.size(); ++i)
     bookVariable(tree_,tauFilters_[i]);
+  bookVariable(tree_,"l1CenJet");
+  bookVariable(tree_,"l1TauJet");
+  bookVariable(tree_,"l1IsoTau");
 }
 
 TTree * MiniAODMuTauTriggerAnalyzer::initTree(edm::Service<TFileService> &fs, std::string name)
@@ -159,6 +168,9 @@ void MiniAODMuTauTriggerAnalyzer::cleanFilterVars(){
     treeVars_[label] = 0.;
   for(std::string &label : tauFilters_)
     treeVars_[label] = 0.;
+  treeVars_["l1CenJet"] = 0.;
+  treeVars_["l1TauJet"] = 0.;
+  treeVars_["l1IsoTau"] = 0.;
 }
 
 std::string MiniAODMuTauTriggerAnalyzer::triggerNameWithoutVersion(const std::string &triggerName)
@@ -254,6 +266,13 @@ void MiniAODMuTauTriggerAnalyzer::analyze(const edm::Event& iEvent, const edm::E
   iEvent.getByToken(muons_, muons);
   edm::Handle<pat::TauCollection> taus;
   iEvent.getByToken(taus_, taus);
+  edm::Handle<l1extra::L1JetParticleCollection> l1CenJets;
+  iEvent.getByToken(l1CenJets_, l1CenJets);
+  edm::Handle<l1extra::L1JetParticleCollection> l1TauJets;
+  iEvent.getByToken(l1TauJets_, l1TauJets);
+  edm::Handle<l1extra::L1JetParticleCollection> l1IsoTaus;
+  iEvent.getByToken(l1IsoTaus_, l1IsoTaus);
+
   edm::Handle<pat::METCollection> mets;
   iEvent.getByToken(mets_, mets);
 
@@ -352,6 +371,37 @@ void MiniAODMuTauTriggerAnalyzer::analyze(const edm::Event& iEvent, const edm::E
 		       <<"\t\tTrigger object: pt="<<trgObj.pt()<<", eta="<<trgObj.eta()<<", phi="<<trgObj.phi() << std::endl; 
 	      */
 	    }
+	  }
+	}
+      }
+      //matching to L1Extra
+      //CenJets
+      float maxL1Et = 0;
+      if(l1CenJets.isValid()){
+	for(const l1extra::L1JetParticle &l1Tau : *l1CenJets) {
+	  if(fabs(l1Tau.eta())<2.2 && l1Tau.et()>maxL1Et && deltaR2(l1Tau,tau) < 0.5*0.5){
+	    maxL1Et = l1Tau.et();
+	    treeVars_["l1CenJet"] = l1Tau.et();
+	  }
+	}
+      }
+      //TauJets
+      maxL1Et = 0;
+      if(l1TauJets.isValid()){
+	for(const l1extra::L1JetParticle &l1Tau : *l1TauJets) {
+	  if(fabs(l1Tau.eta())<2.2 && l1Tau.et()>maxL1Et && deltaR2(l1Tau,tau) < 0.5*0.5){
+	    maxL1Et = l1Tau.et();
+	    treeVars_["l1TauJet"] = l1Tau.et();
+	  }
+	}
+      }
+      //IsoTaus
+      maxL1Et = 0;
+      if(l1IsoTaus.isValid()){
+	for(const l1extra::L1JetParticle &l1Tau : *l1IsoTaus) {
+	  if(fabs(l1Tau.eta())<2.2 && l1Tau.et()>maxL1Et && deltaR2(l1Tau,tau) < 0.5*0.5){
+	    maxL1Et = l1Tau.et();
+	    treeVars_["l1IsoTau"] = l1Tau.et();
 	  }
 	}
       }
