@@ -9,7 +9,7 @@ cmsenv;
 
 git clone https://github.com/mbluj/usercode-TriggerStudies.git TriggerStudies/Tau;
 
-(cd TriggerStudies/Tau; git checkout 7_3_X)
+(cd TriggerStudies/Tau; git checkout 73Xv1.1)
 
 scram b
 
