@@ -325,7 +325,7 @@ void MiniAODETauTriggerAnalyzer::analyze(const edm::Event& iEvent, const edm::Ev
       treeVars_["tauM"] = tau.mass();
       treeVars_["tauCharge"] = tau.charge();
       treeVars_["Mass"] = (tau.p4()+el.p4()).mass();
-      treeVars_["Mt"] = fabs( 2.*el.pt()*mets->at(0).pt()*(1.-cos(deltaPhi(el.phi(),mets->at(0).phi()))));
+      treeVars_["Mt"] = sqrt( 2.*el.pt()*mets->at(0).pt()*(1.-cos(deltaPhi(el.phi(),mets->at(0).phi()))));
 
       // gen match
       if(!checkMCMatch_ || el.genLepton() ) 

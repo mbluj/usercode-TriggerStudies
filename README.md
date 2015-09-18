@@ -1,15 +1,15 @@
 
-Tools for tau triggers validation for 7_3_X
+Tools for tau triggers validation for 7_4_X
 
-cmsrel CMSSW_7_3_6_patch1; #or similar 73X
+cmsrel CMSSW_7_4_6; #or similar 74X
 
-cd CMSSW_7_3_6_patch1/src;
+cd CMSSW_7_4_6/src;
 
 cmsenv;
 
 git clone https://github.com/mbluj/usercode-TriggerStudies.git TriggerStudies/Tau;
 
-(cd TriggerStudies/Tau; git checkout 73Xv1.1)
+(cd TriggerStudies/Tau; git checkout 7_4_X)
 
 scram b
 

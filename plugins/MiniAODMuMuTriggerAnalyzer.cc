@@ -29,7 +29,7 @@
 #include "DataFormats/PatCandidates/interface/Muon.h"
 #include "DataFormats/PatCandidates/interface/MET.h"
 
-#include "DataFormats/Math/interface/deltaR.h"
+#include "SimDataFormats/GeneratorProducts/interface/GenEventInfoProduct.h"
 
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
@@ -58,7 +58,8 @@ private:
   edm::EDGetTokenT<pat::MuonCollection> muons_;
   edm::EDGetTokenT<pat::METCollection> mets_;
   edm::EDGetTokenT<reco::VertexCollection> vertices_;
-
+  edm::EDGetTokenT<GenEventInfoProduct> genEvtInfo_;
+  
   std::set<std::string> tagTriggers_;
   std::vector<std::string> tagFilters_;
   std::vector<std::string> probeFilters_;
@@ -70,6 +71,7 @@ private:
 
   bool tagTightId_, probeTightId_;
   bool checkMCMatch_;
+  bool isMC_;
 
   TTree *tree_;
 };
@@ -81,6 +83,7 @@ MiniAODMuMuTriggerAnalyzer::MiniAODMuMuTriggerAnalyzer(const edm::ParameterSet& 
   muons_(consumes<pat::MuonCollection>(iConfig.getParameter<edm::InputTag>("muons"))),
   mets_(consumes<pat::METCollection>(iConfig.getParameter<edm::InputTag>("met"))),
   vertices_(consumes<reco::VertexCollection>(iConfig.getParameter<edm::InputTag>("vertices"))),
+  genEvtInfo_(consumes<GenEventInfoProduct>(iConfig.getParameter<edm::InputTag>("genEvtInfo"))),
   tagFilters_(iConfig.getParameter<std::vector<std::string> >("tagFilters")),
   probeFilters_(iConfig.getParameter<std::vector<std::string> >("probeFilters")),
   minPtTag_(iConfig.getParameter<double>("minPtTag")),
@@ -91,7 +94,8 @@ MiniAODMuMuTriggerAnalyzer::MiniAODMuMuTriggerAnalyzer(const edm::ParameterSet& 
   isoProbe_(iConfig.getParameter<double>("isoProbe")),
   tagTightId_(iConfig.getParameter<bool>("tagTightId")),
   probeTightId_(iConfig.getParameter<bool>("probeTightId")),
-  checkMCMatch_(iConfig.getParameter<bool>("checkMCMatch"))
+  checkMCMatch_(iConfig.getParameter<bool>("checkMCMatch")),
+  isMC_(iConfig.getParameter<bool>("isMC"))
 {
   edm::Service<TFileService> fs;
   tree_ = initTree(fs,"muMuTriggerTree");
@@ -113,6 +117,8 @@ MiniAODMuMuTriggerAnalyzer::MiniAODMuMuTriggerAnalyzer(const edm::ParameterSet& 
   bookVariable(tree_,"Vx");
   bookVariable(tree_,"Vy");
   bookVariable(tree_,"Vz");
+  bookVariable(tree_,"nVtx");
+  bookVariable(tree_,"weight");
 
 
   std::vector<std::string> tagTrgs( iConfig.getParameter<std::vector<std::string> >("tagTriggers") );
@@ -236,6 +242,16 @@ void MiniAODMuMuTriggerAnalyzer::analyze(const edm::Event& iEvent, const edm::Ev
   treeVars_["run"]   = iEvent.id().run();
   treeVars_["lumi"]  = iEvent.id().luminosityBlock();
   treeVars_["event"] = iEvent.id().event();
+  treeVars_["nVtx"]  = vtxs->size();
+  if(isMC_){
+    edm::Handle<GenEventInfoProduct> genEvtInfo;
+    iEvent.getByToken(genEvtInfo_,genEvtInfo);
+    //get event weight
+    treeVars_["weight"] = genEvtInfo->weight();
+  }
+  else{
+    treeVars_["weight"] = 1;
+  }
 
   bool isTriggered = false;
   const edm::TriggerNames &names = iEvent.triggerNames(*triggerBits);
