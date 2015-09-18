@@ -1,5 +1,6 @@
-// Based at example code from https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookMiniAOD
-// M. Bluj
+//
+// M. Bluj, National Centre for Nuclear Research, Poland
+//
 
 // system include files
 #include <memory>

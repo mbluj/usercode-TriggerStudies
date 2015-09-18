@@ -1,3 +1,7 @@
+//
+// M. Bluj, National Centre for Nuclear Research, Poland
+//
+
 #include "TriggerStudies/Tau/interface/TauTriggerAnalysisHelper.h"
 
 void tautrigger::addElIds(std::map<std::string,CutBasedElId> &ids){
