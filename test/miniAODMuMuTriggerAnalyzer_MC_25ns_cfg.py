@@ -20,6 +20,12 @@ process.source = cms.Source("PoolSource",
     )
 )
 
+process.evtCounter = cms.EDAnalyzer(
+    "BasicGenEventInfoAnalyzer",
+    isMC = cms.bool(isMC),
+    genEvtInfo = cms.InputTag("generator")
+)
+
 process.muMu = cms.EDAnalyzer(
     "MiniAODMuMuTriggerAnalyzer",
     bits = cms.InputTag("TriggerResults","","HLT"), # use correct process name
@@ -42,7 +48,8 @@ process.muMu = cms.EDAnalyzer(
     ),
     probeFilters = cms.vstring(
         # control path HLT_DoubleIsoMu17_eta2p1_v1
-        "hltL1fL1sDoubleMu125L1Filtered16er", # L1Mu with Pt>16
+        "hltL1sL1DoubleMu125", # L1Mu Pt>12,5
+        "hltL1fL1sDoubleMu125L1Filtered16er", # L1Mu with Pt>16,16, |eta|<2.1
         "hltL2fL1sDoubleMu125L1f16erL2Filtered10Q", # L2Mu with Pt>10
         "hltL3fL1sDoubleMu125L1f16erL2f10QL3Filtered17Q", # L3Mu with Pt>17
         "hltL3DzL1sDoubleMu125L1f16erL2f10QL3f17QL3DzFiltered0p2", # Dz(mu,mu)<0.2 (sanity check)
@@ -62,7 +69,8 @@ process.muMu = cms.EDAnalyzer(
     isoProbe = cms.double(0.15),
     tagTightId = cms.bool(False),
     probeTightId = cms.bool(False),
-    checkMCMatch = cms.bool(True)
+    checkMCMatch = cms.bool(True),
+    genEvtInfo = cms.InputTag("generator"),
 )
 
 import HLTrigger.HLTfilters.hltHighLevel_cfi as hlt
@@ -89,6 +97,10 @@ process.countPreSelMuons = cms.EDFilter("PATCandViewCountFilter",
 process.TFileService = cms.Service(
     "TFileService", 
     fileName = cms.string("muMuTrgAna.root") 
+)
+
+process.p0 = cms.Path(
+    process.evtCounter
 )
 
 process.p = cms.Path(

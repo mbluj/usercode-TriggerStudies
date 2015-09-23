@@ -29,6 +29,8 @@
 #include "DataFormats/VertexReco/interface/VertexFwd.h"
 #include "DataFormats/PatCandidates/interface/Muon.h"
 #include "DataFormats/PatCandidates/interface/MET.h"
+#include "DataFormats/L1Trigger/interface/L1MuonParticle.h"
+#include "DataFormats/L1Trigger/interface/L1MuonParticleFwd.h"
 
 #include "SimDataFormats/GeneratorProducts/interface/GenEventInfoProduct.h"
 
@@ -50,13 +52,14 @@ private:
   void cleanFilterVars();
   std::string triggerNameWithoutVersion(const std::string &triggerName);
   float muonIso(const pat::Muon &aMu, float dBetaFactor=0.5, bool allCharged=false);
-  bool isGoodMuon(const pat::Muon &aMu, const reco::Vertex & vtx, bool useOldId=false);
+  bool isGoodMuon(const pat::Muon &aMu, const reco::Vertex & vtx, std::string muId="POG_Medium");
 
   edm::EDGetTokenT<edm::TriggerResults> triggerBits_;
   edm::EDGetTokenT<pat::TriggerObjectStandAloneCollection> triggerObjects_;
   edm::EDGetTokenT<pat::PackedTriggerPrescales> triggerPrescales_;
 
   edm::EDGetTokenT<pat::MuonCollection> muons_;
+  edm::EDGetTokenT<l1extra::L1MuonParticleCollection> l1Mus_;
   edm::EDGetTokenT<pat::METCollection> mets_;
   edm::EDGetTokenT<reco::VertexCollection> vertices_;
   edm::EDGetTokenT<GenEventInfoProduct> genEvtInfo_;
@@ -82,6 +85,7 @@ MiniAODMuMuTriggerAnalyzer::MiniAODMuMuTriggerAnalyzer(const edm::ParameterSet& 
   triggerObjects_(consumes<pat::TriggerObjectStandAloneCollection>(iConfig.getParameter<edm::InputTag>("objects"))),
   triggerPrescales_(consumes<pat::PackedTriggerPrescales>(iConfig.getParameter<edm::InputTag>("prescales"))),
   muons_(consumes<pat::MuonCollection>(iConfig.getParameter<edm::InputTag>("muons"))),
+  l1Mus_(consumes<l1extra::L1MuonParticleCollection>(iConfig.getParameter<edm::InputTag>("l1Muons"))),
   mets_(consumes<pat::METCollection>(iConfig.getParameter<edm::InputTag>("met"))),
   vertices_(consumes<reco::VertexCollection>(iConfig.getParameter<edm::InputTag>("vertices"))),
   genEvtInfo_(consumes<GenEventInfoProduct>(iConfig.getParameter<edm::InputTag>("genEvtInfo"))),
@@ -105,22 +109,23 @@ MiniAODMuMuTriggerAnalyzer::MiniAODMuMuTriggerAnalyzer(const edm::ParameterSet& 
   bookVariable(tree_,"tagPhi");
   bookVariable(tree_,"tagM");
   bookVariable(tree_,"tagCharge");
+  bookVariable(tree_,"tagIso");
   bookVariable(tree_,"probePt");
   bookVariable(tree_,"probeEta");
   bookVariable(tree_,"probePhi");
   bookVariable(tree_,"probeM");
   bookVariable(tree_,"probeCharge");
+  bookVariable(tree_,"probeIso");
   bookVariable(tree_,"tagGenMatch");
   bookVariable(tree_,"probeGenMatch");
   bookVariable(tree_,"MEt");
   bookVariable(tree_,"MEtPhi");
   bookVariable(tree_,"Mass");
-  bookVariable(tree_,"Vx");
-  bookVariable(tree_,"Vy");
-  bookVariable(tree_,"Vz");
+  bookVariable(tree_,"tagMt");
+  bookVariable(tree_,"probeMt");
   bookVariable(tree_,"nVtx");
   bookVariable(tree_,"weight");
-
+  
 
   std::vector<std::string> tagTrgs( iConfig.getParameter<std::vector<std::string> >("tagTriggers") );
   for(unsigned int i=0; i<tagTrgs.size(); ++i)
@@ -131,6 +136,8 @@ MiniAODMuMuTriggerAnalyzer::MiniAODMuMuTriggerAnalyzer(const edm::ParameterSet& 
     bookVariable(tree_,"tag_"+tagFilters_[i]);
   for(unsigned int i=0; i<probeFilters_.size(); ++i)
     bookVariable(tree_,"probe_"+probeFilters_[i]);
+  bookVariable(tree_,"l1Mu");
+
 }
 
 TTree * MiniAODMuMuTriggerAnalyzer::initTree(edm::Service<TFileService> &fs, std::string name)
@@ -161,6 +168,8 @@ void MiniAODMuMuTriggerAnalyzer::cleanFilterVars(){
     treeVars_["tag_"+label] = 0.;
   for(std::string &label : probeFilters_)
     treeVars_["probe_"+label] = 0.;
+
+  treeVars_["l1Mu"] = 0.;
 }
 
 std::string MiniAODMuMuTriggerAnalyzer::triggerNameWithoutVersion(const std::string &triggerName)
@@ -190,10 +199,10 @@ float MiniAODMuMuTriggerAnalyzer::muonIso(const pat::Muon &aMu, float dBetaFacto
   return iso;
 }
 
-bool MiniAODMuMuTriggerAnalyzer::isGoodMuon(const pat::Muon &aMu, const reco::Vertex & vtx, bool useOldId)
+bool MiniAODMuMuTriggerAnalyzer::isGoodMuon(const pat::Muon &aMu, const reco::Vertex & vtx, std::string muId)
 {
   //std::cout<<"Checking mu: pt="<<aMu.pt()<<", eta="<<aMu.eta()<<", phi="<<aMu.phi()<<std::endl;
-  if(useOldId){
+  if(muId=="POG_Tight"||muId=="Tight"){
     // Tight mu
     if( !aMu.isGlobalMuon() || !aMu.isPFMuon() ) return false;
     if( !(aMu.normChi2() < 10.) ) return false;
@@ -204,7 +213,7 @@ bool MiniAODMuMuTriggerAnalyzer::isGoodMuon(const pat::Muon &aMu, const reco::Ve
     if( !(aMu.innerTrack()->hitPattern().numberOfValidPixelHits() > 0) ) return false;
     if( !(aMu.innerTrack()->hitPattern().trackerLayersWithMeasurement() > 5) ) return false;
   }
-  else {
+  else if(muId=="POG_Medium"||muId=="Medium"){
     // Medium mu
     if( !aMu.isLooseMuon() ) return false;
     bool isGlb = ( aMu.isGlobalMuon() &&
@@ -214,6 +223,10 @@ bool MiniAODMuMuTriggerAnalyzer::isGoodMuon(const pat::Muon &aMu, const reco::Ve
     bool isGood = ( aMu.innerTrack()->validFraction() >= 0.8 &&
 		    aMu.segmentCompatibility() >=  (isGlb ? 0.303 : 0.451) );
     if( !isGood) return false;
+  }
+  else {
+    // Basic mu-Id (==loose)
+    if( !aMu.isLooseMuon() ) return false; //i.e. isGlobalMuon&&isTrackerMuon&&isPFMuon
   }
   // Vertex                                                                     
   if( !(fabs( aMu.muonBestTrack()->dxy( vtx.position() ) ) < 0.045) ) return false;
@@ -234,6 +247,8 @@ void MiniAODMuMuTriggerAnalyzer::analyze(const edm::Event& iEvent, const edm::Ev
 
   edm::Handle<pat::MuonCollection> muons;
   iEvent.getByToken(muons_, muons);
+  edm::Handle<l1extra::L1MuonParticleCollection> l1Mus;
+  iEvent.getByToken(l1Mus_, l1Mus);
   edm::Handle<pat::METCollection> mets;
   iEvent.getByToken(mets_, mets);
 
@@ -273,9 +288,6 @@ void MiniAODMuMuTriggerAnalyzer::analyze(const edm::Event& iEvent, const edm::Ev
 
   //At least one vertex
   if(vtxs->size() == 0) return;
-  treeVars_["Vx"] = vtxs->at(0).x();
-  treeVars_["Vy"] = vtxs->at(0).y();
-  treeVars_["Vz"] = vtxs->at(0).z();
 
   if(mets->size() > 0){
     treeVars_["MEt"] = mets->at(0).pt();
@@ -289,7 +301,8 @@ void MiniAODMuMuTriggerAnalyzer::analyze(const edm::Event& iEvent, const edm::Ev
     // Iso
     if( muonIso(tag) > isoTag_ ) continue;
     // id
-    if( !isGoodMuon(tag,vtxs->at(0),tagTightId_) ) continue;
+    std::string tagWP = tagTightId_ ? "POG_Tight" : "POG_Medium";
+    if( !isGoodMuon(tag,vtxs->at(0),tagWP) ) continue;
     //std::cout<<"Tag muon: pt="<<tag.pt()<<", eta="<<tag.eta()<<", phi="<<tag.phi()<<std::endl;
     
     for(const pat::Muon &probe : *muons) {
@@ -302,7 +315,8 @@ void MiniAODMuMuTriggerAnalyzer::analyze(const edm::Event& iEvent, const edm::Ev
       if( deltaR2(tag,probe) < 0.5*0.5) continue;
       //FIXME OS??
       // id
-      if( !isGoodMuon(probe,vtxs->at(0),probeTightId_) ) continue;
+      std::string probeWP = probeTightId_ ? "POG_Tight" : "POG_Medium";
+      if( !isGoodMuon(probe,vtxs->at(0),probeWP) ) continue;
       //std::cout<<"Probe muon: pt="<<probe.pt()<<", eta="<<probe.eta()<<", phi="<<probe.phi()<<std::endl;
       //std::cout<<"DR(tag,probe)="<<deltaR(tag,probe)<<std::endl;
       treeVars_["tagPt"] = tag.pt();
@@ -310,12 +324,18 @@ void MiniAODMuMuTriggerAnalyzer::analyze(const edm::Event& iEvent, const edm::Ev
       treeVars_["tagPhi"] = tag.phi();
       treeVars_["tagM"] = tag.mass();
       treeVars_["tagCharge"] = tag.charge();
+      treeVars_["tagIso"] = muonIso(tag);
       treeVars_["probePt"] = probe.pt();
       treeVars_["probeEta"] = probe.eta();
       treeVars_["probePhi"] = probe.phi();
       treeVars_["probeM"] = probe.mass();
       treeVars_["probeCharge"] = probe.charge();
+      treeVars_["probeIso"] = muonIso(probe);
       treeVars_["Mass"] = (tag.p4()+probe.p4()).mass();
+      if(mets->size() > 0){
+	treeVars_["tagMt"] = sqrt( 2.*tag.pt()*mets->at(0).pt()*(1.-cos(deltaPhi(tag.phi(),mets->at(0).phi()))));
+	treeVars_["probeMt"] = sqrt( 2.*probe.pt()*mets->at(0).pt()*(1.-cos(deltaPhi(probe.phi(),mets->at(0).phi()))));
+      }
       // gen match
       if(!checkMCMatch_ || tag.genLepton() ) 
 	treeVars_["tagGenMatch"] = 1;
@@ -355,6 +375,18 @@ void MiniAODMuMuTriggerAnalyzer::analyze(const edm::Event& iEvent, const edm::Ev
 	  }
 	}
       }
+      //matching to L1Extra
+      float maxL1Pt = 0;
+      treeVars_["l1Mu"] = 0;
+      if(l1Mus.isValid()){
+	for(const l1extra::L1MuonParticle &l1Mu : *l1Mus) {
+	  if(fabs(l1Mu.eta())<maxEtaProbe_ && l1Mu.pt()>maxL1Pt && deltaR2(l1Mu,probe) < 0.5*0.5){
+	    maxL1Pt = l1Mu.pt();
+	    treeVars_["l1Mu"] = l1Mu.pt();
+	  }
+	}
+      }
+
       //fill tree for each pair of good muons (note: two muons can give two good tag-probe pairs)
       tree_->Fill();
     }
