@@ -687,57 +687,11 @@ void eff(double lumi=1, /*pb-1*/
   hPtBkg->Add(hPt[4]);
   hPtBkg->Add(hPt[5]);//QCD from MC
 
-  /*
-  //emulate QCD with Wjets
-  //simple scaling does not work well as Pt for Wjets harder than for QCD 
-  //so trigger matched distribution is weighted bin-by-bin
-  TH1D* hQCDNorm=(TH1D*)hPt[2]->Clone("hQCDNorm");  
-  for(int ib=0;ib<hPt[5]->GetNbinsX()+2;++ib){
-    if(hPt[2]->GetBinContent(ib)>0){
-      hQCDNorm->SetBinContent(ib,hPt[5]->GetBinContent(ib)/hPt[2]->GetBinContent(ib));
-    }
-    else{
-      hQCDNorm->SetBinContent(ib,0);
-    }
-  }
-  hPtBkg->Add(hPt[5]);
-  cut = "weight*("+probe1+"&&"+selMt+")";
-  cut = cut+vtxReWeight;
-  hPtTmp->Reset();
-  t[2]->Project("hPtTmp","tauPt",cut.c_str(),"");
-  hPtTmp->Scale(scale[2],"width");
-  for(int ib=0;ib<hPtTmp->GetNbinsX()+2;++ib){
-    hPtTmp->SetBinContent(ib,hPtTmp->GetBinContent(ib)*hQCDNorm->GetBinContent(ib));
-    hPtTmp->SetBinError(ib,hPtTmp->GetBinError(ib)*hQCDNorm->GetBinContent(ib));
-  }
-  hhPt[0][2]->Add(hPtTmp);
-  cut = "weight*("+probe2+"&&"+selMt+")";
-  cut = cut+vtxReWeight;
-  hPtTmp->Reset();
-  t[2]->Project("hPtTmp","tauPt",cut.c_str(),"");
-  hPtTmp->Scale(scale[2],"width");
-  for(int ib=0;ib<hPtTmp->GetNbinsX()+2;++ib){
-    hPtTmp->SetBinContent(ib,hPtTmp->GetBinContent(ib)*hQCDNorm->GetBinContent(ib));
-    hPtTmp->SetBinError(ib,hPtTmp->GetBinError(ib)*hQCDNorm->GetBinContent(ib));
-  }
-  hhPt[1][2]->Add(hPtTmp);
-  cut = "weight*("+probe20+"&&"+selMt+")";
-  cut = cut+vtxReWeight;
-  hPtTmp->Reset();
-  t[2]->Project("hPtTmp","tauPt",cut.c_str(),"");
-  hPtTmp->Scale(scale[2],"width");
-  for(int ib=0;ib<hPtTmp->GetNbinsX()+2;++ib){
-    hPtTmp->SetBinContent(ib,hPtTmp->GetBinContent(ib)*hQCDNorm->GetBinContent(ib));
-    hPtTmp->SetBinError(ib,hPtTmp->GetBinError(ib)*hQCDNorm->GetBinContent(ib));
-  }
-  hhPt[2][2]->Add(hPtTmp);
-  */
-
 
   for(unsigned int i=0; i<3; ++i){
     //Data
     hhPt[i][0]->Scale(scale[0],"width");
-    //reset underflows
+    //reset overflows
     hhPt[i][0]->SetBinContent(hhPt[i][0]->GetNbinsX()+1,0);
     hhPt[i][0]->SetBinError(hhPt[i][0]->GetNbinsX()+1,0);
     hPt[0]->SetBinContent(hPt[0]->GetNbinsX()+1,0);
@@ -754,7 +708,7 @@ void eff(double lumi=1, /*pb-1*/
 
     //SS data
     hPtSS[i+1]->Scale(scale[0],"width");
-    //reset underflows
+    //reset overflows
     hPtSS[0]->SetBinContent(hPtSS[0]->GetNbinsX()+1,0);
     hPtSS[0]->SetBinError(hPtSS[0]->GetNbinsX()+1,0);    
     hPtSS[i+1]->SetBinContent(hPtSS[i+1]->GetNbinsX()+1,0);
@@ -771,7 +725,7 @@ void eff(double lumi=1, /*pb-1*/
 
     //matched DY
     hhPt[i][1]->Scale(scale[1],"width"); 
-    //reset underflows
+    //reset overflows
     hhPt[i][1]->SetBinContent(hhPt[i][1]->GetNbinsX()+1,0);
     hhPt[i][1]->SetBinError(hhPt[i][1]->GetNbinsX()+1,0);
     hPt[1]->SetBinContent(hPt[1]->GetNbinsX()+1,0);
@@ -791,7 +745,7 @@ void eff(double lumi=1, /*pb-1*/
     grPtEff[i][1]->SetMarkerStyle(grPtEff[i][1]->GetMarkerStyle());
     //all MC (QCD ommited)
     //hhPt[i][2]->Scale(xxx,"width");// already scaled 
-    //reset underflows
+    //reset overflows
     hhPt[i][2]->SetBinContent(hhPt[i][2]->GetNbinsX()+1,0);
     hhPt[i][2]->SetBinError(hhPt[i][2]->GetNbinsX()+1,0);
     hPtBkg->SetBinContent(hPtBkg->GetNbinsX()+1,0);
@@ -871,9 +825,9 @@ void eff(double lumi=1, /*pb-1*/
   ca->RedrawAxis();
   ca->GetFrame()->Draw();
 
-  ca->SaveAs((std::string("tauEff32-RunC_Pt")+std::string(".eps")).c_str());  
-  ca->SaveAs((std::string("tauEff32-RunC_Pt")+std::string(".pdf")).c_str());
-  ca->SaveAs((std::string("tauEff32-RunC_Pt")+std::string(".png")).c_str());
+  ca->SaveAs((std::string("tauEff-MuTau-RunC_Pt")+std::string(".eps")).c_str());  
+  ca->SaveAs((std::string("tauEff-MuTau-RunC_Pt")+std::string(".pdf")).c_str());
+  ca->SaveAs((std::string("tauEff-MuTau-RunC_Pt")+std::string(".png")).c_str());
 
   hEta[0]->Draw();
   hSEta[0]->Draw("hist same");
@@ -887,12 +841,11 @@ void eff(double lumi=1, /*pb-1*/
   ca->RedrawAxis();
   ca->GetFrame()->Draw();
 
-  ca->SaveAs((std::string("tauEff32-RunC_Eta")+std::string(".eps")).c_str());  
-  ca->SaveAs((std::string("tauEff32-RunC_Eta")+std::string(".pdf")).c_str());
-  ca->SaveAs((std::string("tauEff32-RunC_Eta")+std::string(".png")).c_str());
+  ca->SaveAs((std::string("tauEff-MuTau-RunC_Eta")+std::string(".eps")).c_str());  
+  ca->SaveAs((std::string("tauEff-MuTau-RunC_Eta")+std::string(".pdf")).c_str());
+  ca->SaveAs((std::string("tauEff-MuTau-RunC_Eta")+std::string(".png")).c_str());
 
-  //hMVis[0]->Draw();
-  hSMVis[0]->Draw("hist");//hMVis[0]->Draw();
+  hMVis[0]->Draw();
   hSMVis[0]->Draw("hist same");
   for(unsigned int i=1; i<5; ++i)
     hSMVis[i]->Draw("same hist");
@@ -904,9 +857,9 @@ void eff(double lumi=1, /*pb-1*/
   ca->RedrawAxis();
   ca->GetFrame()->Draw();
 
-  ca->SaveAs((std::string("tauEff32-RunC_MVis")+std::string(".eps")).c_str());  
-  ca->SaveAs((std::string("tauEff32-RunC_MVis")+std::string(".pdf")).c_str());
-  ca->SaveAs((std::string("tauEff32-RunC_MVis")+std::string(".png")).c_str());
+  ca->SaveAs((std::string("tauEff-MuTau-RunC_MVis")+std::string(".eps")).c_str());  
+  ca->SaveAs((std::string("tauEff-MuTau-RunC_MVis")+std::string(".pdf")).c_str());
+  ca->SaveAs((std::string("tauEff-MuTau-RunC_MVis")+std::string(".png")).c_str());
 
   hMTau[0]->Draw();
   hSMTau[0]->Draw("hist same");
@@ -920,9 +873,9 @@ void eff(double lumi=1, /*pb-1*/
   ca->RedrawAxis();
   ca->GetFrame()->Draw();
 
-  ca->SaveAs((std::string("tauEff32-RunC_MTau")+std::string(".eps")).c_str());  
-  ca->SaveAs((std::string("tauEff32-RunC_MTau")+std::string(".pdf")).c_str());
-  ca->SaveAs((std::string("tauEff32-RunC_MTau")+std::string(".png")).c_str());
+  ca->SaveAs((std::string("tauEff-MuTau-RunC_MTau")+std::string(".eps")).c_str());  
+  ca->SaveAs((std::string("tauEff-MuTau-RunC_MTau")+std::string(".pdf")).c_str());
+  ca->SaveAs((std::string("tauEff-MuTau-RunC_MTau")+std::string(".png")).c_str());
 
   hMt[0]->Draw();
   hSMt[0]->Draw("hist same");
@@ -936,9 +889,9 @@ void eff(double lumi=1, /*pb-1*/
   ca->RedrawAxis();
   ca->GetFrame()->Draw();
 
-  ca->SaveAs((std::string("tauEff32-RunC_Mt")+std::string(".eps")).c_str());  
-  ca->SaveAs((std::string("tauEff32-RunC_Mt")+std::string(".pdf")).c_str());
-  ca->SaveAs((std::string("tauEff32-RunC_Mt")+std::string(".png")).c_str());
+  ca->SaveAs((std::string("tauEff-MuTau-RunC_Mt")+std::string(".eps")).c_str());  
+  ca->SaveAs((std::string("tauEff-MuTau-RunC_Mt")+std::string(".pdf")).c_str());
+  ca->SaveAs((std::string("tauEff-MuTau-RunC_Mt")+std::string(".png")).c_str());
 
   hNVtx[0]->Draw();
   hSNVtx[0]->Draw("hist same");
@@ -952,9 +905,9 @@ void eff(double lumi=1, /*pb-1*/
   ca->RedrawAxis();
   ca->GetFrame()->Draw();
 
-  ca->SaveAs((std::string("tauEff32-RunC_NVtx")+std::string(".eps")).c_str());  
-  ca->SaveAs((std::string("tauEff32-RunC_NVtx")+std::string(".pdf")).c_str());
-  ca->SaveAs((std::string("tauEff32-RunC_NVtx")+std::string(".png")).c_str());
+  ca->SaveAs((std::string("tauEff-MuTau-RunC_NVtx")+std::string(".eps")).c_str());  
+  ca->SaveAs((std::string("tauEff-MuTau-RunC_NVtx")+std::string(".pdf")).c_str());
+  ca->SaveAs((std::string("tauEff-MuTau-RunC_NVtx")+std::string(".png")).c_str());
 
   std::string names[] = {"HLT","L1+HLT","L1"};
 
@@ -1058,9 +1011,9 @@ void eff(double lumi=1, /*pb-1*/
     ca->RedrawAxis();
     ca->GetFrame()->Draw();
 
-    ca->SaveAs((std::string("tauEff32-RunC_")+names[i]+std::string(".eps")).c_str());  
-    ca->SaveAs((std::string("tauEff32-RunC_")+names[i]+std::string(".pdf")).c_str());  
-    ca->SaveAs((std::string("tauEff32-RunC_")+names[i]+std::string(".png")).c_str());  
+    ca->SaveAs((std::string("tauEff-MuTau-RunC_")+names[i]+std::string(".eps")).c_str());  
+    ca->SaveAs((std::string("tauEff-MuTau-RunC_")+names[i]+std::string(".pdf")).c_str());  
+    ca->SaveAs((std::string("tauEff-MuTau-RunC_")+names[i]+std::string(".png")).c_str());  
     //////
     //Data vs SS data
     /*
@@ -1099,9 +1052,9 @@ void eff(double lumi=1, /*pb-1*/
     ca->RedrawAxis();
     ca->GetFrame()->Draw();
 
-    ca->SaveAs((std::string("tauEff32-RunC_SS_")+names[i]+std::string(".eps")).c_str());  
-    ca->SaveAs((std::string("tauEff32-RunC_SS_")+names[i]+std::string(".pdf")).c_str());  
-    ca->SaveAs((std::string("tauEff32-RunC_SS_")+names[i]+std::string(".png")).c_str());  
+    ca->SaveAs((std::string("tauEff-MuTau-RunC_SS_")+names[i]+std::string(".eps")).c_str());  
+    ca->SaveAs((std::string("tauEff-MuTau-RunC_SS_")+names[i]+std::string(".pdf")).c_str());  
+    ca->SaveAs((std::string("tauEff-MuTau-RunC_SS_")+names[i]+std::string(".png")).c_str());  
 
   }
 
