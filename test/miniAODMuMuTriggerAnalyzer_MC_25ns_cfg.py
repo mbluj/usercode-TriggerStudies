@@ -4,6 +4,8 @@ import FWCore.ParameterSet.Config as cms
 
 process = cms.Process("Demo")
 
+isMC = True
+
 process.load("FWCore.MessageService.MessageLogger_cfi")
 process.MessageLogger.cerr.FwkReport.reportEvery = cms.untracked.int32(1000)
 process.options = cms.untracked.PSet(
@@ -69,7 +71,8 @@ process.muMu = cms.EDAnalyzer(
     isoProbe = cms.double(0.15),
     tagTightId = cms.bool(False),
     probeTightId = cms.bool(False),
-    checkMCMatch = cms.bool(True),
+    checkMCMatch = cms.bool(isMC),
+    isMC = cms.bool(isMC),
     genEvtInfo = cms.InputTag("generator"),
 )
 
