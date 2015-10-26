@@ -10,6 +10,7 @@
   <use   name="FWCore/Common"/>
   <use   name="DataFormats/Common"/>
   <use   name="DataFormats/PatCandidates"/>
+  <use   name="DataFormats/VertexReco"/>
   <use   name="Utilities/General"/>
   <use   name="PhysicsTools/UtilAlgos"/>
   <use   name="SimDataFormats/GeneratorProducts"/>

@@ -22,6 +22,9 @@
 
 #include "SimDataFormats/GeneratorProducts/interface/GenEventInfoProduct.h"
 
+#include "DataFormats/VertexReco/interface/Vertex.h"
+#include "DataFormats/VertexReco/interface/VertexFwd.h"
+
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
 
@@ -37,20 +40,23 @@ private:
   virtual void analyze(const edm::Event&, const edm::EventSetup&) override;
 
   edm::EDGetTokenT<GenEventInfoProduct> genEvtInfo_;
+  edm::EDGetTokenT<reco::VertexCollection> vertices_;
 
   bool isMC_;
 
   //TTree *tree_;
-  TH1F *hCounts_;
+  TH1D *hCounts_;
+  TH1D *hNVtx_;
 };
 
 BasicGenEventInfoAnalyzer::BasicGenEventInfoAnalyzer(const edm::ParameterSet& iConfig):
   genEvtInfo_(consumes<GenEventInfoProduct>(iConfig.getParameter<edm::InputTag>("genEvtInfo"))),
+  vertices_(consumes<reco::VertexCollection>(iConfig.getParameter<edm::InputTag>("vertices"))),
   isMC_(iConfig.getParameter<bool>("isMC"))
 {
   edm::Service<TFileService> fs;
-  hCounts_ = fs->make<TH1F>("hCounts","event counts",10,0,10);
-  
+  hCounts_ = fs->make<TH1D>("hCounts","event counts",10,0,10);
+  hNVtx_ = fs->make<TH1D>("hNVtx","No. of vertices",50,0,50);
 }
 
 BasicGenEventInfoAnalyzer::~BasicGenEventInfoAnalyzer() {
@@ -84,6 +90,10 @@ void BasicGenEventInfoAnalyzer::analyze(const edm::Event& iEvent, const edm::Eve
   //	   <<", sum of weights: "<< hCounts_->GetBinContent(2)
   //	   <<std::endl;
 
+  //No. of vertices
+  edm::Handle<reco::VertexCollection> vtxs;
+  iEvent.getByToken(vertices_, vtxs);
+  hNVtx_ ->Fill(vtxs->size(),evtWeight);
   //std::cout << std::endl;
   
 }
