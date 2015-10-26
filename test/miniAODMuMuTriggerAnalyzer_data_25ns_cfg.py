@@ -18,15 +18,16 @@ process.maxEvents = cms.untracked.PSet(
 
 process.source = cms.Source("PoolSource",
     fileNames = cms.untracked.vstring(
-        #"root://cms-xrd-global.cern.ch///store/mc/RunIISpring15DR74/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/MINIAODSIM/Asympt25ns_MCRUN2_74_V9-v3/10000/009D49A5-7314-E511-84EF-0025905A605E.root"
-        "root://xrootd-cms.infn.it//store/data/Run2015C/SingleMuon/MINIAOD/PromptReco-v1/000/254/833/00000/FCB9CBAE-104B-E511-BF89-02163E011F65.root"
+        #"root://cms-xrd-global.cern.ch//store/mc/RunIISpring15MiniAODv2/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/MINIAODSIM/74X_mcRun2_asymptotic_v2-v1/50000/00759690-D16E-E511-B29E-00261894382D.root",
+        "root://xrootd-cms.infn.it//store/data/Run2015D/SingleMuon/MINIAOD/05Oct2015-v1/10000/04EDCDA3-916F-E511-AD11-0025905938B4.root"
     )
 )
 
 process.evtCounter = cms.EDAnalyzer(
     "BasicGenEventInfoAnalyzer",
     isMC = cms.bool(isMC),
-    genEvtInfo = cms.InputTag("generator")
+    genEvtInfo = cms.InputTag("generator"),
+    vertices = cms.InputTag("offlineSlimmedPrimaryVertices"),
 )
 
 process.muMu = cms.EDAnalyzer(
@@ -43,11 +44,13 @@ process.muMu = cms.EDAnalyzer(
         "HLT_IsoMu24_eta2p1_v*", # unp'ed at 1.4e34 
         "HLT_IsoMu20_eta2p1_v*", # unp'ed at 7e33 
         "HLT_IsoMu17_eta2p1_v*", # unp'ed at 5e33
+        "HLT_IsoMu18_v*",       #  unp'ed at 5e33
     ),
     tagFilters = cms.vstring(
         "hltL3crIsoL1sMu20Eta2p1L1f0L2f10QL3f24QL3trkIsoFiltered0p09", # HLT_IsoMu24_eta2p1_v1
         "hltL3crIsoL1sMu16Eta2p1L1f0L2f10QL3f20QL3trkIsoFiltered0p09", # HLT_IsoMu20_eta2p1_v1
         "hltL3crIsoL1sSingleMu16erL1f0L2f10QL3f17QL3trkIsoFiltered0p09", # HLT_IsoMu17_eta2p1_v1
+        "hltL3crIsoL1sMu16L1f0L2f10QL3f18QL3trkIsoFiltered0p09", # HLT_IsoMu18_v
     ),
     probeFilters = cms.vstring(
         # control path HLT_DoubleIsoMu17_eta2p1_v1
@@ -63,8 +66,14 @@ process.muMu = cms.EDAnalyzer(
         "hltL2fL1sSingleMu16erL1f0L2Filtered10Q", # L2Mu with Pt>10 
         "hltL3fL1sSingleMu16erL1f0L2f10QL3Filtered17Q", # L3Mu with Pt>17
         "hltL3crIsoL1sSingleMu16erL1f0L2f10QL3f17QL3trkIsoFiltered0p09", # full isolation
+        # LT_IsoMu18_v
+        "hltL1sL1SingleMu16",
+        "hltL1fL1sMu16L1Filtered0",
+        "hltL2fL1sMu16L1f0L2Filtered10Q",
+        "hltL3fL1sMu16L1f0L2f10QL3Filtered18Q",
+        "hltL3crIsoL1sMu16L1f0L2f10QL3f18QL3trkIsoFiltered0p09",
     ),
-    minPtTag = cms.double(21.),
+    minPtTag = cms.double(19.),
     maxEtaTag = cms.double(2.1),
     isoTag = cms.double(0.15),
     minPtProbe = cms.double(15.),
@@ -89,7 +98,7 @@ process.preSelectedMuons = cms.EDFilter(
     src = cms.InputTag("slimmedMuons"),
     #cut = cms.string("pt > 15. && abs(eta) < 2.1 && isPFMuon && isGlobalMuon && userIsolation(\'pat::PfChargedAllIso\') < 1.5") # PfChargedAllIso=13= \'pfChargedAll\'which is not acceptd due to some reason
     #cut = cms.string("pt > 15. && abs(eta) < 2.1 && isPFMuon && isGlobalMuon")
-    cut = cms.string("pt > 15. && abs(eta) < 2.1")
+    cut = cms.string("pt > 10. && abs(eta) < 2.1")
 )
 
 process.countPreSelMuons = cms.EDFilter("PATCandViewCountFilter",
