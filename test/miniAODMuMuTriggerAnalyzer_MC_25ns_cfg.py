@@ -43,12 +43,14 @@ process.muMu = cms.EDAnalyzer(
     tagTriggers = cms.vstring(  #version number is ignored, so can be replaced by wildcard (*) or dropped
         "HLT_IsoMu24_eta2p1_v*", # unp'ed at 1.4e34 
         "HLT_IsoMu20_eta2p1_v*", # unp'ed at 7e33 
+        "HLT_IsoMu20_v*",        # unp'ed at 7e33 
         "HLT_IsoMu17_eta2p1_v*", # unp'ed at 5e33
-        "HLT_IsoMu18_v*",       #  unp'ed at 5e33
+        "HLT_IsoMu18_v*",        # unp'ed at 5e33
     ),
     tagFilters = cms.vstring(
         "hltL3crIsoL1sMu20Eta2p1L1f0L2f10QL3f24QL3trkIsoFiltered0p09", # HLT_IsoMu24_eta2p1_v1
         "hltL3crIsoL1sMu16Eta2p1L1f0L2f10QL3f20QL3trkIsoFiltered0p09", # HLT_IsoMu20_eta2p1_v1
+        "hltL3crIsoL1sMu16L1f0L2f10QL3f20QL3trkIsoFiltered0p09", # HLT_IsoMu20_v
         "hltL3crIsoL1sSingleMu16erL1f0L2f10QL3f17QL3trkIsoFiltered0p09", # HLT_IsoMu17_eta2p1_v1
         "hltL3crIsoL1sMu16L1f0L2f10QL3f18QL3trkIsoFiltered0p09", # HLT_IsoMu18_v
     ),
@@ -66,7 +68,7 @@ process.muMu = cms.EDAnalyzer(
         "hltL2fL1sSingleMu16erL1f0L2Filtered10Q", # L2Mu with Pt>10 
         "hltL3fL1sSingleMu16erL1f0L2f10QL3Filtered17Q", # L3Mu with Pt>17
         "hltL3crIsoL1sSingleMu16erL1f0L2f10QL3f17QL3trkIsoFiltered0p09", # full isolation
-        # LT_IsoMu18_v
+        # HLT_IsoMu18_v
         "hltL1sL1SingleMu16",
         "hltL1fL1sMu16L1Filtered0",
         "hltL2fL1sMu16L1f0L2Filtered10Q",
