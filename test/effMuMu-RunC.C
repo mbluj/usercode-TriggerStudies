@@ -268,11 +268,11 @@ void eff(double lumi=1, /*pb-1*/
     for(unsigned int j=0; j<4; ++j){
       std::string cutEta=sel;
       if(j==1)
-	cutEta = cut + " && abs(probeEta)<0.9";//barrel
+	cutEta = cutEta + " && abs(probeEta)<0.9";//barrel
       else if(j==2)
-	cutEta = cut + " && abs(probeEta)<1.2 && abs(probeEta)>0.9";//overlap
+	cutEta = cutEta + " && abs(probeEta)<1.2 && abs(probeEta)>0.9";//overlap
       else if(j==3)
-	cutEta = cut + " && abs(probeEta)<2.1 && abs(probeEta)>1.2";//endcap
+	cutEta = cutEta + " && abs(probeEta)<2.1 && abs(probeEta)>1.2";//endcap
       cutEta = "weight*("+cutEta+")";
       if(i!=0)
 	cutEta = cutEta+vtxReWeight;
@@ -364,11 +364,11 @@ void eff(double lumi=1, /*pb-1*/
       for(unsigned int j=0; j<4; ++j){
 	std::string cutEta=sel + " && " + probe[iProb];
 	if(j==1)
-	  cutEta = cut + " && abs(probeEta)<0.9" + " && " + probe[iProb];//barrel
+	  cutEta = cutEta + " && abs(probeEta)<0.9" + " && " + probe[iProb];//barrel
 	else if(j==2)
-	  cutEta = cut + " && abs(probeEta)<1.2 && abs(probeEta)>0.9" + "&& " + probe[iProb];//overlap
+	  cutEta = cutEta + " && abs(probeEta)<1.2 && abs(probeEta)>0.9" + "&& " + probe[iProb];//overlap
 	else if(j==3)
-	  cutEta = cut + " && abs(probeEta)<2.1 && abs(probeEta)>1.2" + " && " + probe[iProb];//endcap
+	  cutEta = cutEta + " && abs(probeEta)<2.1 && abs(probeEta)>1.2" + " && " + probe[iProb];//endcap
 	cutEta = "weight*("+cutEta+")";
 	if(i!=0){
 	  cutEta = cutEta+vtxReWeight;
