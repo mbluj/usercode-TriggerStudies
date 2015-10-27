@@ -182,6 +182,17 @@ void eff(double lumi=1, /*pb-1*/
     f[i]->Close();
   }
 
+  // regions
+  std::vector<std::string> region_name;
+  std::vector<std::string> region_def;
+  region_name.push_back("inclusive");
+  region_def.push_back("1");
+  region_name.push_back("barrel");
+  region_def.push_back("abs(probeEta)<0.9 && abs(probeEta)>=0.");
+  region_name.push_back("overlap");
+  region_def.push_back("abs(probeEta)<1.2 && abs(probeEta)>=0.9");
+  region_name.push_back("endcap");
+  region_def.push_back("abs(probeEta)<2.1 && abs(probeEta)>=1.2");
 
   double ptBins[]={0,1,2,3,4,5,6,7,8,9,
 		   10,11,12,13,14,15,16,17,18,19,
@@ -192,12 +203,12 @@ void eff(double lumi=1, /*pb-1*/
 		   60,65,
 		   70,80,90,100
   };
-  TH1D *hPt[4][5];
+  TH1D *hPt[region_def.size()][5];
   TH1D *hEta[5];
   TH1D *hM[5];
   TH1D *hNVtx[5];
   for(unsigned int i=0; i<5; ++i){
-    for(unsigned int j=0; j<4; ++j){
+    for(unsigned int j=0; j<region_def.size(); ++j){
       hPt[j][i] = new TH1D(Form("hPt_%i%i",j,i)," ;p_{T}^{#mu offline} [GeV]; Events/width [1/GeV]",52,ptBins);//upto 100
       //hPt[j][i] = new TH1D(Form("hPt_%i%i",j,i)," ;p_{T}^{#mu offline} [GeV]; Events",100,0,100);//upto 100        
       hPt[j][i]->Sumw2();
@@ -230,19 +241,22 @@ void eff(double lumi=1, /*pb-1*/
 
   std::string muTag_MC   = "(HLT_IsoMu17_eta2p1_v>0 && tag_hltL3crIsoL1sSingleMu16erL1f0L2f10QL3f17QL3trkIsoFiltered0p09>18)";
   std::string muTag_data = "(HLT_IsoMu18_v>0 && tag_hltL3crIsoL1sMu16L1f0L2f10QL3f18QL3trkIsoFiltered0p09>18)";
-  std::string off   = "tagPt>19 && abs(tagEta)<2.1 && tagIso<0.1 && probePt>15 && abs(probeEta)<2.1 && probeIso<0.1 && tagCharge*probeCharge<0";
+  std::string off   = "tagPt>20 && abs(tagEta)<2.1 && tagIso<0.1 && probePt>10 && abs(probeEta)<2.1 && probeIso<0.1 && tagCharge*probeCharge<0";
   std::string window = "abs(Mass-91)<5";
   std::string vtxReWeight="*vtxWeight(nVtx)";
 
   //filters to check
-  std::vector<std::string> probe;
+  std::vector<std::string> probeMC, probeData;
   std::vector<std::string> names;
-  probe.push_back("probe_hltL3crIsoL1sDoubleMu125L1f16erL2f10QL3f17QL3Dz0p2L3crIsoRhoFiltered0p15IterTrk02>0");//DoubleIsoMu17_eta2p1
+  probeMC.push_back("probe_hltL3crIsoL1sDoubleMu125L1f16erL2f10QL3f17QL3Dz0p2L3crIsoRhoFiltered0p15IterTrk02>0");//DoubleIsoMu17_eta2p1
+  probeData.push_back("probe_hltL3crIsoL1sDoubleMu125L1f16erL2f10QL3f17QL3Dz0p2L3crIsoRhoFiltered0p15IterTrk02>0");//DoubleIsoMu17_eta2p1
   names.push_back("DoubleIsoMu17_eta2p1");
-  probe.push_back("probe_hltL3crIsoL1sSingleMu16erL1f0L2f10QL3f17QL3trkIsoFiltered0p09>0");//IsoMu17_eta2p1 - tau leg of signle seeded mu+tau
+  probeMC.push_back("probe_hltL3crIsoL1sSingleMu16erL1f0L2f10QL3f17QL3trkIsoFiltered0p09>0");//IsoMu17_eta2p1 - tau leg of signle seeded mu+tau
+  probeData.push_back("probe_hltL3crIsoL1sSingleMu16erL1f0L2f10QL3f17QL3trkIsoFiltered0p09>0");//IsoMu17_eta2p1 - tau leg of signle seeded mu+tau
   names.push_back("IsoMu17_eta2p1");
-  // regions
-  std::string region_name[] = {"inclusive","barrel","overlap","endcap"};
+  probeMC.push_back("probe_hltL3crIsoL1sSingleMu16erL1f0L2f10QL3f17QL3trkIsoFiltered0p09>18");//IsoMu17_eta2p1 - tau leg of signle seeded mu+tau titghtened to 18GeV
+  probeData.push_back("probe_hltL3crIsoL1sMu16L1f0L2f10QL3f18QL3trkIsoFiltered0p09>0");//IsoMu18
+  names.push_back("IsoMu18");
 
   if(!doVtxReWeight)
     vtxReWeight="*vtxWeight(nVtx,false)";
@@ -264,27 +278,21 @@ void eff(double lumi=1, /*pb-1*/
     std::cout<<i<<std::endl;
     std::cout<<cut<<std::endl;
 
-    for(unsigned int j=0; j<4; ++j){
+    for(unsigned int j=0; j<region_def.size(); ++j){
       std::string cutEta = muTag_MC+" && "+off+" && "+window;
       if(i==0){
 	cutEta = muTag_data+" && "+off+" && "+window;
       }
-      if(j==1)
-	cutEta = cutEta + " && abs(probeEta)<0.9";//barrel
-      else if(j==2)
-	cutEta = cutEta + " && abs(probeEta)<1.2 && abs(probeEta)>0.9";//overlap
-      else if(j==3)
-	cutEta = cutEta+ " && abs(probeEta)<2.1 && abs(probeEta)>1.2";//endcap
-      cutEta = "weight*("+cutEta+")";
+      cutEta = "weight*("+cutEta + " && " + region_def[j]+")";
       if(i!=0)
 	cutEta = cutEta+vtxReWeight;
       std::cout<<"\t"<<j<<". cut with eta: "<<cutEta<<std::endl;
       t[i]->Project(Form("hPt_%i%i",j,i),"probePt",cutEta.c_str(),"");
       hPt[j][i]->Scale(scale[i],"width");
     }
-    std::cout<<"Expected: "<<hPt[0][i]->Integral(0,hPt[0][i]->GetNbinsX()+1)
+    std::cout<<"Expected: "<<hPt[0][i]->Integral(0,hPt[0][i]->GetNbinsX()+1,"width")
 	     <<" for L="<<lumi<<"pb-1"<<std::endl;
-    std::cout<<hPt[0][i]->Integral(0,hPt[0][i]->GetNbinsX()+1,"")<<std::endl;
+    std::cout<<hPt[0][i]->Integral(0,hPt[0][i]->GetNbinsX()+1,"width")<<std::endl;
 
     t[i]->Project(Form("hM_%i",i),"Mass",cutNoM.c_str(),"");
     hM[i]->Scale(scale[i],"");
@@ -302,12 +310,12 @@ void eff(double lumi=1, /*pb-1*/
   //stacked
   //              DY       ,W+jets,ttbar  ,QCD
   int colMap[] = {kOrange-2,kRed+2,kBlue-1,kMagenta-10};
-  TH1D *hSPt[4][4];
+  TH1D *hSPt[region_def.size()][4];
   TH1D *hSEta[4];
   TH1D *hSM[4];
   TH1D *hSNVtx[4];
   for(unsigned int i=0; i<4; ++i){
-    for(unsigned int j=0; j<4; ++j){
+    for(unsigned int j=0; j<region_def.size(); ++j){
       hSPt[j][i]=(TH1D*)hPt[0][1]->Clone(Form("hSPt_%i%i",j,i));
       hSPt[j][i]->Reset();
       hSPt[j][i]->SetFillColor(colMap[i]);
@@ -322,7 +330,7 @@ void eff(double lumi=1, /*pb-1*/
     hSNVtx[i]->Reset();
     hSNVtx[i]->SetFillColor(colMap[i]);
     for(unsigned int j=i+1; j<5; ++j){
-      for(unsigned int k=0; k<4; ++k){
+      for(unsigned int k=0; k<region_def.size(); ++k){
 	hSPt[k][i]->Add(hPt[k][j]);
       }
       hSEta[i]->Add(hEta[j]);
@@ -337,15 +345,15 @@ void eff(double lumi=1, /*pb-1*/
   
   ///Effs
   // 2(data&MC) x 4 regions in eta x 2 probes  
-  TH1D *hhPt[2][4][probe.size()];
-  TH1D *hhPtEff[2][4][probe.size()];
-  TGraphAsymmErrors *grPtEff[2][4][probe.size()];
+  TH1D *hhPt[2][4][probeMC.size()];
+  TH1D *hhPtEff[2][4][probeMC.size()];
+  TGraphAsymmErrors *grPtEff[2][4][probeMC.size()];
   //TH2D *hFrame = new TH2D("hFrame",";p_{T}^{#tau offline} [GeV]; Efficiency",2,0,100,2,0.01,1.10);
   //hFrame->SetStats(0);
 
-  for(unsigned int iProb=0; iProb<probe.size(); ++iProb){
+  for(unsigned int iProb=0; iProb<probeMC.size(); ++iProb){
     for(unsigned int i=0; i<2; ++i){
-      for(unsigned int j=0; j<4; ++j){
+      for(unsigned int j=0; j<region_def.size(); ++j){
 	hhPt[i][j][iProb]=(TH1D*)hPt[1][0]->Clone(Form("hhPt_%i%i%i",i,j,iProb)); 
 	//hhPt[i][j][iProb]->Sumw2();
 	hhPt[i][j][iProb]->Reset();     
@@ -361,21 +369,15 @@ void eff(double lumi=1, /*pb-1*/
   TH1D *hhPtTmp=(TH1D*)hPt[0][1]->Clone("hhPtTmp"); 
   //hhPtTmp->Sumw2();
   hhPtTmp->Reset();
-  for(unsigned int iProb=0; iProb<probe.size(); ++iProb){
+  for(unsigned int iProb=0; iProb<probeMC.size(); ++iProb){
     for(unsigned int i=0; i<5; ++i){
-      for(unsigned int j=0; j<4; ++j){
-	std::string cutEta=muTag_MC+" && "+off+" && "+window+" && "+probe[iProb];
+      for(unsigned int j=0; j<region_def.size(); ++j){
+	std::string cutEta=muTag_MC+" && "+off+" && "+window;
 	if(i==0)
-	  cutEta=muTag_data+" && "+off+" && "+window+" && "+probe[iProb];
-	if(j==1)
-	  cutEta = cutEta + " && abs(probeEta)<0.9" + " && " + probe[iProb];//barrel
-	else if(j==2)
-	  cutEta = cutEta + " && abs(probeEta)<1.2 && abs(probeEta)>0.9" + "&& " + probe[iProb];//overlap
-	else if(j==3)
-	  cutEta = cutEta + " && abs(probeEta)<2.1 && abs(probeEta)>1.2" + " && " + probe[iProb];//endcap
-	cutEta = "weight*("+cutEta+")";
+	  cutEta=muTag_data+" && "+off+" && "+window;
+	cutEta = cutEta + " && " + region_def[j];
 	if(i!=0){
-	  cutEta = cutEta+vtxReWeight;
+	  cutEta = "weight*("+cutEta+" && "+probeMC[iProb]+")"+vtxReWeight;
 	  std::cout<<"\t"<<j<<". cut with eta and probed trigger : "<<cutEta<<std::endl;
 	  hhPtTmp->Reset();
 	  t[i]->Project("hhPtTmp","probePt",cutEta.c_str(),"");
@@ -383,6 +385,7 @@ void eff(double lumi=1, /*pb-1*/
 	  hhPt[1][j][iProb]->Add(hhPtTmp);
 	}
 	else{
+	  cutEta = "weight*("+cutEta+" && "+probeData[iProb]+")";
 	  std::cout<<"\t"<<j<<". cut with eta and probed trigger : "<<cutEta<<std::endl;
 	  t[i]->Project(Form("hhPt_%i%i%i",0,j,iProb),"probePt",cutEta.c_str(),"");
 	  hhPt[0][j][iProb]->Scale(scale[i],"width");
@@ -391,12 +394,12 @@ void eff(double lumi=1, /*pb-1*/
     }
   }
 
-  for(unsigned int j=0; j<4; ++j){
+  for(unsigned int j=0; j<region_def.size(); ++j){
     //Data
     //reset overflows
     hPt[j][0]->SetBinContent(hPt[j][0]->GetNbinsX()+1,0);
     hPt[j][0]->SetBinError(hPt[j][0]->GetNbinsX()+1,0);
-    for(unsigned int iProb=0; iProb<probe.size(); ++iProb){
+    for(unsigned int iProb=0; iProb<probeMC.size(); ++iProb){
       //reset overflows
       hhPt[0][j][iProb]->SetBinContent(hhPt[0][j][iProb]->GetNbinsX()+1,0);
       hhPt[0][j][iProb]->SetBinError(hhPt[0][j][iProb]->GetNbinsX()+1,0);
@@ -421,7 +424,7 @@ void eff(double lumi=1, /*pb-1*/
     hPtMC->SetBinContent(hPtMC->GetNbinsX()+1,0);
     hPtMC->SetBinError(hPtMC->GetNbinsX()+1,0);
     
-    for(unsigned int iProb=0; iProb<probe.size(); ++iProb){
+    for(unsigned int iProb=0; iProb<probeMC.size(); ++iProb){
       //reset overflows
       hhPt[1][j][iProb]->SetBinContent(hhPt[1][j][iProb]->GetNbinsX()+1,0);
       hhPt[1][j][iProb]->SetBinError(hhPt[1][j][iProb]->GetNbinsX()+1,0);
@@ -486,7 +489,7 @@ void eff(double lumi=1, /*pb-1*/
   if(lumi<1000.)
     lumi_13TeV = Form("%.1f pb^{-1}",lumi);
   else
-    lumi_13TeV = Form("%.1f fb^{-1}",lumi/1000.);
+    lumi_13TeV = Form("%.2f fb^{-1}",lumi/1000.);
   int iPeriod = 4;    // 1=7TeV, 2=8TeV, 3=7+8TeV, 4=13TeV, 7=7+8+13TeV 
   //   iPos = 10*(alignement 1/2/3) + position (1/2/3 = left/center/right)
   int iPos=11;// top-left, left-aligned
@@ -494,7 +497,7 @@ void eff(double lumi=1, /*pb-1*/
   //int iPos=22; center, centered
 
   // Pt 
-  for(unsigned int j=0; j<4; ++j){
+  for(unsigned int j=0; j<region_def.size(); ++j){
     if( hPt[j][0]->GetBinContent(hPt[j][0]->GetMaximumBin()) > hSPt[j][0]->GetBinContent(hSPt[j][0]->GetMaximumBin()) )
       hPt[j][0]->Draw();
     else
@@ -625,8 +628,8 @@ void eff(double lumi=1, /*pb-1*/
   //zero x-errors by hand
   if(zeroErrX){
     for(unsigned int i=0; i<2; ++i){
-      for(unsigned int j=0; j<4; ++j){
-	for(unsigned int iProb=0; iProb<probe.size(); ++iProb){
+      for(unsigned int j=0; j<region_def.size(); ++j){
+	for(unsigned int iProb=0; iProb<probeMC.size(); ++iProb){
 	  std::cout<<i<<","<<j<<","<<iProb<<","<<grPtEff[i][j][iProb]->GetN()<<std::endl;
 	  for(int ib=0; ib<grPtEff[i][j][iProb]->GetN()-1; ++ib){
 	    //std::cout<<i<<","<<j<<","<<ib<<std::endl;
@@ -637,8 +640,8 @@ void eff(double lumi=1, /*pb-1*/
       }
     }
   }
-  for(unsigned int iProb=0; iProb<probe.size(); ++iProb){
-    for(unsigned int j=0; j<4; ++j){
+  for(unsigned int iProb=0; iProb<probeMC.size(); ++iProb){
+    for(unsigned int j=0; j<region_def.size(); ++j){
       hFrame->Draw();
       grPtEff[0][j][iProb]->Draw("pz same");
       grPtEff[1][j][iProb]->Draw("pz same");
