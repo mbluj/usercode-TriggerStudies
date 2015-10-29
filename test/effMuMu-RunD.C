@@ -15,16 +15,18 @@
 #include "TLegend.h"
 #include "TPaveText.h"
 #include "TFrame.h"
+#include "TFitResult.h"
+#include "TFitResultPtr.h"
 
 #include "tdrstyle.C" //sic! *.C included
 #include "CMS_lumi.C" //sic! *.C included
 
 //Implementation of CBErf from HTT TWiki by J.Swanson, R.Lane
 double myCBErf(double m, double m0, double sigma, double alpha,
-	     double n, double norm){
+		  double n, double norm){
   //Useful constants
-  const double sqrtPiOver2 = sqrt(TMath::PiOver2()); //1.2533141373;
-  const double sqrt2 = sqrt(2.); //1.4142135624;
+  const double sqrtPiOver2 = sqrt(TMath::PiOver2());
+  const double sqrt2 = sqrt(2.);
 
   
   double sig = fabs((double)sigma);
@@ -188,9 +190,9 @@ void eff(double lumi=1, /*pb-1*/
   region_name.push_back("inclusive");
   region_def.push_back("1");
   region_name.push_back("barrel");
-  region_def.push_back("abs(probeEta)<0.9 && abs(probeEta)>=0.");
+  region_def.push_back("abs(probeEta)<0.8 && abs(probeEta)>=0.0");
   region_name.push_back("overlap");
-  region_def.push_back("abs(probeEta)<1.2 && abs(probeEta)>=0.9");
+  region_def.push_back("abs(probeEta)<1.2 && abs(probeEta)>=0.8");
   region_name.push_back("endcap");
   region_def.push_back("abs(probeEta)<2.1 && abs(probeEta)>=1.2");
 
@@ -203,10 +205,15 @@ void eff(double lumi=1, /*pb-1*/
 		   60,65,
 		   70,80,90,100
   };
+  double etaBins[]={-2.4,-2.1,-1.6,-1.2,-0.8,-0.3,
+		    -0.2, 0.2,
+		    0.3, 0.8, 1.2, 1.6, 2.1, 2.4};
   TH1D *hPt[region_def.size()][5];
   TH1D *hEta[5];
+  TH1D *hEta20[5];
   TH1D *hM[5];
   TH1D *hNVtx[5];
+  TH1D *hNVtx20[5];
   for(unsigned int i=0; i<5; ++i){
     for(unsigned int j=0; j<region_def.size(); ++j){
       hPt[j][i] = new TH1D(Form("hPt_%i%i",j,i)," ;p_{T}^{#mu offline} [GeV]; Events/width [1/GeV]",52,ptBins);//upto 100
@@ -217,12 +224,19 @@ void eff(double lumi=1, /*pb-1*/
       hPt[j][i]->SetStats(0);
       //hPt[j][i]->SetMinimum(0.1);
     }
-    hEta[i] = new TH1D(Form("hEta_%i",i)," ;#eta^{#mu offline}; Events",50,-2.5,2.5);
+    hEta[i] = new TH1D(Form("hEta_%i",i)," ;#eta^{#mu offline}; Events",48,-2.4,2.4);
     hEta[i]->Sumw2();
     hEta[i]->SetMarkerStyle(20);
     //hEta[i]->SetMarkerSize(0.7);
     hEta[i]->SetStats(0);
     //hEta[i]->SetMinimum(0.1);
+
+    hEta20[i] = new TH1D(Form("hEta20_%i",i)," ;#eta^{#mu offline}; Events",13,etaBins);
+    hEta20[i]->Sumw2();
+    hEta20[i]->SetMarkerStyle(20);
+    //hEta20[i]->SetMarkerSize(0.7);
+    hEta20[i]->SetStats(0);
+    //hEta20[i]->SetMinimum(0.1);
 
     hM[i] = new TH1D(Form("hM_%i",i)," ;M(#mu,#mu) [GeV]; Events",100,50,150);
     hM[i]->Sumw2();
@@ -237,6 +251,13 @@ void eff(double lumi=1, /*pb-1*/
     //hNVtx[i]->SetMarkerSize(0.7);
     hNVtx[i]->SetStats(0);
     //hNVtx[i]->SetMinimum(0.1);
+
+    hNVtx20[i] = new TH1D(Form("hNVtx20_%i",i)," ;No. of vertices; Events",50,0,50);
+    hNVtx20[i]->Sumw2();
+    hNVtx20[i]->SetMarkerStyle(20);
+    //hNVtx20[i]->SetMarkerSize(0.7);
+    hNVtx20[i]->SetStats(0);
+    //hNVtx20[i]->SetMinimum(0.1);
   }  
 
   std::string muTag_MC   = "(HLT_IsoMu17_eta2p1_v>0 && tag_hltL3crIsoL1sSingleMu16erL1f0L2f10QL3f17QL3trkIsoFiltered0p09>18)";
@@ -261,7 +282,7 @@ void eff(double lumi=1, /*pb-1*/
   if(!doVtxReWeight)
     vtxReWeight="*vtxWeight(nVtx,false)";
 
-  std::string cut, cutNoM;
+  std::string cut, cutNoM, cutPt;
   for(unsigned int i=0; i<5; ++i){
     if(i>4){
       std::cout<<"What?!"<<std::endl;
@@ -269,10 +290,12 @@ void eff(double lumi=1, /*pb-1*/
     }
     if(i!=0){
       cut    = "weight*("+muTag_MC+" && "+off+" && "+window+")"+vtxReWeight;
+      cutPt  = "weight*("+muTag_MC+" && "+off+" && "+window+" && probePt>20)"+vtxReWeight;
       cutNoM = "weight*("+muTag_MC+" && "+off+              ")"+vtxReWeight;
     }
     else{
       cut    = "weight*("+muTag_data+" && "+off+" && "+window+")";
+      cutPt  = "weight*("+muTag_data+" && "+off+" && "+window+" && probePt>20)";
       cutNoM = "weight*("+muTag_data+" && "+off+              ")";
     }
     std::cout<<i<<std::endl;
@@ -301,8 +324,14 @@ void eff(double lumi=1, /*pb-1*/
     hEta[i]->Scale(scale[i],"");
     std::cout<<hEta[i]->Integral(0,hEta[i]->GetNbinsX()+1)<<std::endl;
 
+    t[i]->Project(Form("hEta20_%i",i),"probeEta",cutPt.c_str(),"");
+    hEta20[i]->Scale(scale[i],"width");
+
     t[i]->Project(Form("hNVtx_%i",i),"nVtx",cut.c_str(),"");
     hNVtx[i]->Scale(scale[i]);
+
+    t[i]->Project(Form("hNVtx20_%i",i),"nVtx",cutPt.c_str(),"");
+    hNVtx20[i]->Scale(scale[i]);
 
     std::cout<<"end of loop: "<<i<<std::endl;
   }
@@ -312,8 +341,10 @@ void eff(double lumi=1, /*pb-1*/
   int colMap[] = {kOrange-2,kRed+2,kBlue-1,kMagenta-10};
   TH1D *hSPt[region_def.size()][4];
   TH1D *hSEta[4];
+  TH1D *hSEta20[4];
   TH1D *hSM[4];
   TH1D *hSNVtx[4];
+  TH1D *hSNVtx20[4];
   for(unsigned int i=0; i<4; ++i){
     for(unsigned int j=0; j<region_def.size(); ++j){
       hSPt[j][i]=(TH1D*)hPt[0][1]->Clone(Form("hSPt_%i%i",j,i));
@@ -323,19 +354,27 @@ void eff(double lumi=1, /*pb-1*/
     hSEta[i]=(TH1D*)hEta[1]->Clone(Form("hSEta_%i",i));
     hSEta[i]->Reset();
     hSEta[i]->SetFillColor(colMap[i]);
+    hSEta20[i]=(TH1D*)hEta20[1]->Clone(Form("hSEta20_%i",i));
+    hSEta20[i]->Reset();
+    hSEta20[i]->SetFillColor(colMap[i]);
     hSM[i]=(TH1D*)hM[1]->Clone(Form("hSM_%i",i));
     hSM[i]->Reset();
     hSM[i]->SetFillColor(colMap[i]);
     hSNVtx[i]=(TH1D*)hNVtx[1]->Clone(Form("hSNVtx_%i",i));
     hSNVtx[i]->Reset();
     hSNVtx[i]->SetFillColor(colMap[i]);
+    hSNVtx20[i]=(TH1D*)hNVtx20[1]->Clone(Form("hSNVtx20_%i",i));
+    hSNVtx20[i]->Reset();
+    hSNVtx20[i]->SetFillColor(colMap[i]);
     for(unsigned int j=i+1; j<5; ++j){
       for(unsigned int k=0; k<region_def.size(); ++k){
 	hSPt[k][i]->Add(hPt[k][j]);
       }
       hSEta[i]->Add(hEta[j]);
+      hSEta20[i]->Add(hEta20[j]);
       hSM[i]->Add(hM[j]);
       hSNVtx[i]->Add(hNVtx[j]);
+      hSNVtx20[i]->Add(hNVtx20[j]);
     }
   }
   std::cout<<"Data: "<<hEta[0]->Integral(0,hEta[0]->GetNbinsX()+1)
@@ -346,8 +385,12 @@ void eff(double lumi=1, /*pb-1*/
   ///Effs
   // 2(data&MC) x 4 regions in eta x 2 probes  
   TH1D *hhPt[2][4][probeMC.size()];
+  TH1D *hhEta[2][probeMC.size()];
+  TH1D *hhNVtx[2][probeMC.size()];
   TH1D *hhPtEff[2][4][probeMC.size()];
   TGraphAsymmErrors *grPtEff[2][4][probeMC.size()];
+  TGraphAsymmErrors *grEtaEff[2][probeMC.size()];
+  TGraphAsymmErrors *grNVtxEff[2][probeMC.size()];
   //TH2D *hFrame = new TH2D("hFrame",";p_{T}^{#tau offline} [GeV]; Efficiency",2,0,100,2,0.01,1.10);
   //hFrame->SetStats(0);
 
@@ -363,14 +406,45 @@ void eff(double lumi=1, /*pb-1*/
 	hhPtEff[i][j][iProb]->SetTitle(";p_{T}^{#mu offline} [GeV]; Efficiency");
 	hhPtEff[i][j][iProb]->Reset();       
       }
+      hhEta[i][iProb]=(TH1D*)hEta20[0]->Clone(Form("hhEta_%i%i",i,iProb)); 
+      //hhEta[i][iProb]->Sumw2();
+      hhEta[i][iProb]->Reset();     
+      hhNVtx[i][iProb]=(TH1D*)hNVtx20[0]->Clone(Form("hhNVtx_%i%i",i,iProb)); 
+      //hhNVtx[i][iProb]->Sumw2();
+      hhNVtx[i][iProb]->Reset();     
     }
   }
   //Data and all MC's
   TH1D *hhPtTmp=(TH1D*)hPt[0][1]->Clone("hhPtTmp"); 
   //hhPtTmp->Sumw2();
   hhPtTmp->Reset();
+  TH1D *hhEtaTmp=(TH1D*)hEta20[0]->Clone("hhEtaTmp"); 
+  //hhEtaTmp->Sumw2();
+  hhEtaTmp->Reset();
+  TH1D *hhNVtxTmp=(TH1D*)hNVtx20[0]->Clone("hhNVtxTmp"); 
+  //hhNVtxTmp->Sumw2();
+  hhNVtxTmp->Reset();
   for(unsigned int iProb=0; iProb<probeMC.size(); ++iProb){
     for(unsigned int i=0; i<5; ++i){
+      std::string cutProbe=off+" && "+window+" && probePt>20";
+      if(i!=0){
+	cutProbe="weight*("+muTag_MC+" && "+cutProbe+" && "+probeMC[iProb]+")"+vtxReWeight;
+	hhEtaTmp->Reset();
+	t[i]->Project("hhEtaTmp","probeEta",cutProbe.c_str(),"");
+	hhEtaTmp->Scale(scale[i],"width");
+	hhEta[1][iProb]->Add(hhEtaTmp);
+	hhNVtxTmp->Reset();
+	t[i]->Project("hhNVtxTmp","nVtx",cutProbe.c_str(),"");
+	hhNVtxTmp->Scale(scale[i]);
+	hhNVtx[1][iProb]->Add(hhNVtxTmp);
+      }
+      else{
+	cutProbe="weight*("+muTag_data+" && "+cutProbe+" && "+probeData[iProb]+")";
+	t[i]->Project(Form("hhEta_%i%i",0,iProb),"probeEta",cutProbe.c_str(),"");
+	hhEta[0][iProb]->Scale(scale[i],"width");
+	t[i]->Project(Form("hhNVtx_%i%i",0,iProb),"nVtx",cutProbe.c_str(),"");
+	hhNVtx[0][iProb]->Scale(scale[i]);
+      }
       for(unsigned int j=0; j<region_def.size(); ++j){
 	std::string cutEta=muTag_MC+" && "+off+" && "+window;
 	if(i==0)
@@ -394,6 +468,73 @@ void eff(double lumi=1, /*pb-1*/
     }
   }
 
+  //Data
+  //reset overflows
+  hNVtx20[0]->SetBinError(hNVtx20[0]->GetNbinsX()+1,0);
+  for(unsigned int iProb=0; iProb<probeMC.size(); ++iProb){
+    //reset overflows
+    hhNVtx[0][iProb]->SetBinContent(hhNVtx[0][iProb]->GetNbinsX()+1,0);
+    hhNVtx[0][iProb]->SetBinError(hhNVtx[0][iProb]->GetNbinsX()+1,0);
+
+    //efficiency
+    grEtaEff[0][iProb] = new TGraphAsymmErrors(hhEta[0][iProb],hEta20[0],"cl=0.683 b(1,1) mode");
+    grNVtxEff[0][iProb] = new TGraphAsymmErrors(hhNVtx[0][iProb],hNVtx20[0],"cl=0.683 b(1,1) mode");
+      
+    //style
+    grEtaEff[0][iProb]->SetLineColor(kBlack);
+    grNVtxEff[0][iProb]->SetLineColor(kBlack);
+    grEtaEff[0][iProb]->SetMarkerColor(kBlack);
+    grNVtxEff[0][iProb]->SetMarkerColor(kBlack);
+    grEtaEff[0][iProb]->SetMarkerStyle(20);
+    grNVtxEff[0][iProb]->SetMarkerStyle(20);
+  }
+  //all MC
+  TH1D *hEtaMC = (TH1D*)hSEta20[0]->Clone("hEtaMC");
+  TH1D *hNVtxMC = (TH1D*)hSNVtx20[0]->Clone("hNVtxMC");
+  //reset overflows
+  hNVtxMC->SetBinContent(hNVtxMC->GetNbinsX()+1,0);
+  hNVtxMC->SetBinError(hNVtxMC->GetNbinsX()+1,0);
+    
+  for(unsigned int iProb=0; iProb<probeMC.size(); ++iProb){
+    //reset overflows
+    hhNVtx[1][iProb]->SetBinContent(hhNVtx[1][iProb]->GetNbinsX()+1,0);
+    hhNVtx[1][iProb]->SetBinError(hhNVtx[1][iProb]->GetNbinsX()+1,0);
+      
+    //add hoc safety checks
+    for(int ij=0; ij<hEtaMC->GetNbinsX()+2; ++ij){
+      double ratio = hEtaMC->GetBinContent(ij)!=0. ? hhEta[1][iProb]->GetBinContent(ij)/hEtaMC->GetBinContent(ij) : -100.*hhEta[1][iProb]->GetBinContent(ij);
+      if(ratio>1) {	
+	std::cout<<" >1 !"<<std::endl;
+	std::cout<<"hhEta[1]["<<iProb<<"]/hEtaMC("<<ij<<") "<<hhEta[1][iProb]->GetBinContent(ij)<<"/"
+		 <<hEtaMC->GetBinContent(ij)<<" = "<<ratio<<std::endl;
+	if(ratio-1<0.005)//add hoc 'renormalization' for safety
+	  hhEta[1][iProb]->SetBinContent(ij,hEtaMC->GetBinContent(ij));
+      }
+    }
+    for(int ij=0; ij<hNVtxMC->GetNbinsX()+2; ++ij){
+      double ratio = hNVtxMC->GetBinContent(ij)!=0. ? hhNVtx[1][iProb]->GetBinContent(ij)/hNVtxMC->GetBinContent(ij) : -100.*hhNVtx[1][iProb]->GetBinContent(ij);
+      if(ratio>1) {	
+	std::cout<<" >1 !"<<std::endl;
+	std::cout<<"hhNVtx[1]["<<iProb<<"]/hNVtxMC("<<ij<<") "<<hhNVtx[1][iProb]->GetBinContent(ij)<<"/"
+		 <<hNVtxMC->GetBinContent(ij)<<" = "<<ratio<<std::endl;
+	if(ratio-1<0.005)//add hoc 'renormalization' for safety
+	  hhNVtx[1][iProb]->SetBinContent(ij,hNVtxMC->GetBinContent(ij));
+      }
+    }
+
+    //efficiency
+    grEtaEff[1][iProb] = new TGraphAsymmErrors(hhEta[1][iProb],hEtaMC,"cl=0.683 b(1,1) mode");
+    grNVtxEff[1][iProb] = new TGraphAsymmErrors(hhNVtx[1][iProb],hNVtxMC,"cl=0.683 b(1,1) mode");
+      
+    //style
+    grEtaEff[1][iProb]->SetLineColor(kRed);
+    grNVtxEff[1][iProb]->SetLineColor(kRed);
+    grEtaEff[1][iProb]->SetMarkerColor(kRed);
+    grNVtxEff[1][iProb]->SetMarkerColor(kRed);
+    grEtaEff[1][iProb]->SetMarkerStyle(21);
+    grNVtxEff[1][iProb]->SetMarkerStyle(21);
+  }
+  /////
   for(unsigned int j=0; j<region_def.size(); ++j){
     //Data
     //reset overflows
@@ -413,7 +554,7 @@ void eff(double lumi=1, /*pb-1*/
       hhPtEff[0][j][iProb]->SetMaximum(1.10);
       hhPtEff[0][j][iProb]->SetLineColor(kBlack);
       hhPtEff[0][j][iProb]->SetMarkerColor(kBlack);
-      hhPtEff[0][j][iProb]->SetMarkerColor(20);
+      hhPtEff[0][j][iProb]->SetMarkerStyle(20);
       grPtEff[0][j][iProb]->SetLineColor(kBlack);
       grPtEff[0][j][iProb]->SetMarkerColor(kBlack);
       grPtEff[0][j][iProb]->SetMarkerStyle(hhPtEff[0][j][iProb]->GetMarkerStyle());
@@ -544,6 +685,25 @@ void eff(double lumi=1, /*pb-1*/
   ca->SaveAs((std::string("muEff-RunD_Eta")+std::string(".pdf")).c_str());
   ca->SaveAs((std::string("muEff-RunD_Eta")+std::string(".png")).c_str());
 
+  if( hEta20[0]->GetBinContent(hEta20[0]->GetMaximumBin()) > hSEta20[0]->GetBinContent(hSEta20[0]->GetMaximumBin()) )
+    hEta20[0]->Draw();
+  else
+    hSEta20[0]->Draw("hist");
+  hSEta20[0]->Draw("hist same");
+  for(unsigned int i=1; i<4; ++i)
+    hSEta20[i]->Draw("same hist");
+  hEta20[0]->Draw("same");
+  leg->Draw();
+
+  CMS_lumi(ca, iPeriod, iPos);
+  ca->Update();
+  ca->RedrawAxis();
+  ca->GetFrame()->Draw();
+
+  ca->SaveAs((std::string("muEff-RunD_EtaPt20")+std::string(".eps")).c_str());  
+  ca->SaveAs((std::string("muEff-RunD_EtaPt20")+std::string(".pdf")).c_str());
+  ca->SaveAs((std::string("muEff-RunD_EtaPt20")+std::string(".png")).c_str());
+
   if( hM[0]->GetBinContent(hM[0]->GetMaximumBin()) > hSM[0]->GetBinContent(hSM[0]->GetMaximumBin()) )
     hM[0]->Draw();
   else
@@ -608,6 +768,7 @@ void eff(double lumi=1, /*pb-1*/
 
   //Effs
   TF1 *myErf[2];
+  TFitResultPtr res[2];
   /**
   myErf[0] = new TF1("myErf0","[0]*(0.5+0.5*TMath::Erf((x-[2])/(sqrt(2)*[1])))",0,100);
   myErf[0]->SetParNames("eff","res","thr");
@@ -655,13 +816,45 @@ void eff(double lumi=1, /*pb-1*/
 	  hhPtEff[1][j][iProb]->Draw("e, same");
 	*/
 	//myErf[0]->SetParameters(17,0.55,0.81,1.55,0.9);
-	myErf[0]->SetParameters(18,5,5,20,0.95);
-	grPtEff[0][j][iProb]->Fit("myErf0","M EX0","",18,100);
-	//grPtEff[0][j][iProb]->Fit("myErf0","M","",18,100);
-	//myErf[1]->SetParameters(17,0.55,0.81,1.55,0.9);
-	myErf[1]->SetParameters(18,5,5,20,0.95);
-	grPtEff[1][j][iProb]->Fit("myErf1","M EX0","",18,100);
-	//grPtEff[1][j][iProb]->Fit("myErf1","M","",18,100);
+	myErf[0]->SetParameters(17.5,5,5,20,0.95);
+	//myErf[0]->SetParameters(17.5,0.2,0.01,1.5,0.95);
+	//myErf[0]->SetParameters(17.5,0.2,1.0,5.0,0.95);
+	//myErf[0]->SetParLimits(0, 12,23);//turn-on point/threshold (m0)
+	myErf[0]->SetParLimits(4, 0.8,1.0);//eff at plateau (norm)
+	res[0]= grPtEff[0][j][iProb]->Fit("myErf0","M EX0 S","",18,100);
+	//res[0] = grPtEff[0][j][iProb]->Fit("myErf0","M S","",16,100);
+	std::cout<<"*********************************"<<std::endl
+		 <<"Data: "<<names[iProb]<<", "<<region_name[j]<<std::endl
+		 <<"Chi2/Ndf+"<<res[0]->Chi2()<<"/"<<res[0]->Ndf()<<"="<<res[0]->Chi2()/res[0]->Ndf()
+		 <<", Prob="<<res[0]->Prob()
+		 <<std::endl;
+	for(unsigned int iPar=0; iPar<res[0]->NPar(); ++iPar){
+	  std::cout<<res[0]->ParName(iPar)<<": "
+		   <<res[0]->Parameter(iPar)<<"+-"<<res[0]->ParError(iPar)
+		   <<std::endl;
+	}
+	std::cout<<"*********************************"<<std::endl<<std::endl;
+
+	//myErf[1]->SetParameters(17,0.55,0.81,1.55,0.9);	
+	myErf[1]->SetParameters(17.5,5,5,20,0.95);
+	//myErf[1]->SetParameters(17.5,0.2,0.01,1.5,0.95);
+	//myErf[1]->SetParameters(17.5,0.2,1.0,5.0,0.95);
+	//myErf[1]->SetParLimits(0, 12,23);//turn-on point/threshold (m0)
+	myErf[1]->SetParLimits(4, 0.8,1.0);//eff at plateau (norm)
+	res[1] = grPtEff[1][j][iProb]->Fit("myErf1","M EX0 S","",18,100);
+	//res[1] = grPtEff[1][j][iProb]->Fit("myErf1","M S","",16,100);
+	std::cout<<"*********************************"<<std::endl
+		 <<"MC: "<<names[iProb]<<", "<<region_name[j]<<std::endl
+		 <<"Chi2/Ndf="<<res[1]->Chi2()<<"/"<<res[1]->Ndf()<<"="<<res[1]->Chi2()/res[1]->Ndf()
+		 <<", Prob="<<res[1]->Prob()
+		 <<std::endl;
+	for(unsigned int iPar=0; iPar<res[1]->NPar(); ++iPar){
+	  std::cout<<res[1]->ParName(iPar)<<": "
+		   <<res[1]->Parameter(iPar)<<"+-"<<res[1]->ParError(iPar)
+		   <<std::endl;
+	}
+	std::cout<<"*********************************"<<std::endl<<std::endl;
+
 	grPtEff[0][j][iProb]->Draw("pz same");
 	grPtEff[1][j][iProb]->Draw("pz same");
       }
@@ -692,6 +885,57 @@ void eff(double lumi=1, /*pb-1*/
       ca->SaveAs((std::string("muEff-RunD_")+names[iProb]+std::string("_")+region_name[j]+std::string(".pdf")).c_str());  
       ca->SaveAs((std::string("muEff-RunD_")+names[iProb]+std::string("_")+region_name[j]+std::string(".png")).c_str());  
     }
+  }
+  //Eff in eta
+  TH1D *hFrameEta=(TH1D*)hhEta[0][0]->Clone("hFrameEta");
+  hFrameEta->Reset();
+  hFrameEta->SetMinimum(0.01); 
+  hFrameEta->SetMaximum(1.10);
+  hFrameEta->SetTitle(";#eta^{#mu offline}; Efficiency");
+
+  for(unsigned int iProb=0; iProb<probeMC.size(); ++iProb){
+    hFrameEta->Draw();
+    grEtaEff[0][iProb]->Draw("pz same");
+    grEtaEff[1][iProb]->Draw("pz same");
+    leg2->Clear();
+    leg2->AddEntry(grEtaEff[0][iProb],"Data","PLE");
+    leg2->AddEntry(grEtaEff[1][iProb],"Simulation","PLE");
+    leg2->Draw();
+
+    CMS_lumi(ca, iPeriod, iPos);
+    ca->Update();
+    ca->RedrawAxis();
+    ca->GetFrame()->Draw();
+
+    ca->SaveAs((std::string("muEff-RunD_EtaEff_")+names[iProb]+std::string(".eps")).c_str());
+    ca->SaveAs((std::string("muEff-RunD_EtaEff_")+names[iProb]+std::string(".pdf")).c_str());
+    ca->SaveAs((std::string("muEff-RunD_EtaEff_")+names[iProb]+std::string(".png")).c_str());
+  }
+
+  //Eff in NVtx
+  TH1D *hFrameNVtx=(TH1D*)hhNVtx[0][0]->Clone("hFrameNVtx");
+  hFrameNVtx->Reset();
+  hFrameNVtx->SetMinimum(0.01); 
+  hFrameNVtx->SetMaximum(1.10);
+  hFrameNVtx->SetTitle(";No. of vertices; Efficiency");
+
+  for(unsigned int iProb=0; iProb<probeMC.size(); ++iProb){
+    hFrameNVtx->Draw();
+    grNVtxEff[0][iProb]->Draw("pz same");
+    grNVtxEff[1][iProb]->Draw("pz same");
+    leg2->Clear();
+    leg2->AddEntry(grNVtxEff[0][iProb],"Data","PLE");
+    leg2->AddEntry(grNVtxEff[1][iProb],"Simulation","PLE");
+    leg2->Draw();
+
+    CMS_lumi(ca, iPeriod, iPos);
+    ca->Update();
+    ca->RedrawAxis();
+    ca->GetFrame()->Draw();
+
+    ca->SaveAs((std::string("muEff-RunD_NVtxEff_")+names[iProb]+std::string(".eps")).c_str());
+    ca->SaveAs((std::string("muEff-RunD_NVtxEff_")+names[iProb]+std::string(".pdf")).c_str());
+    ca->SaveAs((std::string("muEff-RunD_NVtxEff_")+names[iProb]+std::string(".png")).c_str());
   }
 
   return;
